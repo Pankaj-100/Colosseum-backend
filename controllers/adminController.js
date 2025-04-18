@@ -99,32 +99,45 @@ const getUser = catchAsyncErrors(async (req, res, next) => {
 const updateUser = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const { name, email, contact, verified } = req.body;
+
   const user = await User.findById(id);
-  if (!user) {
-    return next(new ErrorHandler("User not found", 404));
+  if (!user) return next(new ErrorHandler("User not found", 404));
+
+  // Email check (excludes current user)
+  if (email && email !== user.email) {
+    const emailExists = await User.findOne({ 
+      email, 
+      _id: { $ne: id } 
+    });
+    if (emailExists) return next(new ErrorHandler("Email already in use", 400));
   }
 
-  if (email && email !== user.email) {
-    const emailExists = await User.findOne({ email });
-    if (emailExists) {
-      return next(new ErrorHandler("Email already in use", 400));
-    }
-  }
+  // Contact check (excludes current user)
   if (contact && contact !== user.contact) {
-    const contactExists = await User.findOne({ contact });
+    const contactExists = await User.findOne({ 
+      contact, 
+      _id: { $ne: id } 
+    });
     if (contactExists) {
-      return next(new ErrorHandler("Contact number already in use", 400));
+      return next(new ErrorHandler(
+        `Contact number already used by: ${contactExists.email}`,
+        400
+      ));
     }
   }
+
   const updatedUser = await User.findByIdAndUpdate(
     id,
     { 
       name: name || user.name,
       email: email || user.email,
       contact: contact || user.contact,
-      verified: verified !== undefined ? verified : user.verified
+      verified: verified ?? user.verified // Nullish coalescing
     },
-    { new: true, runValidators: true }
+    { 
+      new: true, 
+      runValidators: true 
+    }
   ).select("-password -otp -otpExpires");
 
   res.status(200).json({
@@ -133,7 +146,6 @@ const updateUser = catchAsyncErrors(async (req, res, next) => {
     user: updatedUser
   });
 });
-
 // Delete User
 const deleteUser = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
