@@ -28,7 +28,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       default: "English", // English as default
-    
     },
     verified: {
       type: Boolean,

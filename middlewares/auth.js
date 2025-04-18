@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken");
-const userModel = require("../models/userModel");
+const { User } = require("../models/userModel");
 const ErrorHandler = require("../utils/errorHandler");
+
+const dotenv = require("dotenv");
+dotenv.config({ path: "../config/config.env" });
 
 exports.auth = async (req, res, next) => {
   try {
@@ -11,25 +14,21 @@ exports.auth = async (req, res, next) => {
         },
       });
     }
-
-    const { userId } = jwt.verify(
+    const decoded = jwt.verify(
       req.headers.authorization,
       process.env.JWT_SECRET
     );
-    console.log({ userId });
-
-    req.userId = userId;
-
+    req.userId = decoded.id;
     next();
   } catch (error) {
     return res.status(401).send({ error: { message: `Unauthorized` } });
   }
 };
-
 exports.isAdmin = async (req, res, next) => {
   try {
     const userId = req.userId;
-    const user = await userModel.findById(userId).select("+password");
+    console.log(userId)
+    const user = await User.findById(userId).select("+password");
 
     if (!user)
       return next(new ErrorHandler("Invalid token. User not found.", 401));

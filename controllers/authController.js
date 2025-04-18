@@ -3,6 +3,8 @@ const bcryptjs = require("bcryptjs");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncError");
 const nodemailer = require("../utils/nodeMailer");
+
+
 const jwt = require("jsonwebtoken");
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
