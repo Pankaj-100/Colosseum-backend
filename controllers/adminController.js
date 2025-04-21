@@ -40,7 +40,7 @@ const login = catchAsyncErrors(async (req, res, next) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      contact:user.contact,
+      phone:user.phone,
       role: user.role
     }
   });
@@ -98,7 +98,7 @@ const getUser = catchAsyncErrors(async (req, res, next) => {
 // Update User Details
 const updateUser = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  const { name, email, contact, verified } = req.body;
+  const { name, email, phone, verified } = req.body;
 
   const user = await User.findById(id);
   if (!user) return next(new ErrorHandler("User not found", 404));
@@ -113,9 +113,9 @@ const updateUser = catchAsyncErrors(async (req, res, next) => {
   }
 
   // Contact check (excludes current user)
-  if (contact && contact !== user.contact) {
+  if (phone && phone !== user.phone) {
     const contactExists = await User.findOne({ 
-      contact, 
+      phone, 
       _id: { $ne: id } 
     });
     if (contactExists) {
@@ -131,7 +131,7 @@ const updateUser = catchAsyncErrors(async (req, res, next) => {
     { 
       name: name || user.name,
       email: email || user.email,
-      contact: contact || user.contact,
+      phone: phone || user.phone,
       verified: verified ?? user.verified // Nullish coalescing
     },
     { 
