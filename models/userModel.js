@@ -11,11 +11,14 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    phone: {
+    countryCode: {
       type: String,
       required: true,
+    },
+    contact: {
+      type: Number,  
+      required: true,
       unique: true,
-      match: [/^\+[1-9]\d{1,14}$/, "Phone number must be in E.164 format"],
     },
     password: {
       type: String,
@@ -24,7 +27,7 @@ const userSchema = new mongoose.Schema(
     preferredLanguage: {
       type: String,
       required: true,
-      default: "English",
+      default: "English", // English as default
     },
     verified: {
       type: Boolean,
@@ -37,8 +40,9 @@ const userSchema = new mongoose.Schema(
     otpExpires: {
       type: Date,
     },
-    role: {
-      type: String,
+    role:
+    {
+      type:String,
       default: 'user',
     }
   },
