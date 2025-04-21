@@ -11,11 +11,11 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-   phoneNumber: {
+   phone: {
     type: String,
     required: true,
     unique: true,
-    // match: [/^\+[1-9]\d{1,14}$/, "Phone number must be in E.164 format"],
+
   },
     password: {
       type: String,
