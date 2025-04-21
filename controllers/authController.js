@@ -12,7 +12,7 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 
 // Signup
 const signup = catchAsyncErrors(async (req, res, next) => {
-  const { name, email,  phone, password, preferredLanguage  } = req.body;
+  const { name, email,phone,password, preferredLanguage  } = req.body;
 
   if (!name || !email || !phone || !password) {
     return next(new ErrorHandler("All fields are required", 400));
@@ -181,7 +181,8 @@ const resendOTP = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: "New OTP sent to your email"
+    message: "New OTP sent to your email",
+    otp
   });
 });
 
