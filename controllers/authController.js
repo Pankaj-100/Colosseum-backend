@@ -17,9 +17,9 @@ const signup = catchAsyncErrors(async (req, res, next) => {
   if (!name || !email || !phone || !password) {
     return next(new ErrorHandler("All fields are required", 400));
   }
-  // if (!isValidPhoneNumber(phone)) {
-  //   return res.status(400).json({ message: "Invalid phone number format" });
-  // }
+  if (!isValidPhoneNumber(phone)) {
+    return res.status(400).json({ message: "Invalid phone number format" });
+  }
   
 
   const existingUser = await User.findOne({ 
