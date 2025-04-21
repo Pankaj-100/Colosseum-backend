@@ -3,6 +3,7 @@ const bcryptjs = require("bcryptjs");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncError");
 const nodemailer = require("../utils/nodeMailer");
+const { isValidPhoneNumber } = require("libphonenumber-js");
 
 
 const jwt = require("jsonwebtoken");
@@ -11,16 +12,20 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 
 // Signup
 const signup = catchAsyncErrors(async (req, res, next) => {
-  const { name, email, countryCode, contact, password, preferredLanguage  } = req.body;
+  const { name, email,  phone, password, preferredLanguage  } = req.body;
 
-  if (!name || !email || !countryCode || !contact || !password) {
+  if (!name || !email || !phone || !password) {
     return next(new ErrorHandler("All fields are required", 400));
   }
+  if (!isValidPhoneNumber(phone)) {
+    return res.status(400).json({ message: "Invalid phone number format" });
+  }
+  
 
   const existingUser = await User.findOne({ 
     $or: [
       { email },
-      { contact }
+      { phone }
     ] 
   });
 
@@ -39,8 +44,7 @@ const signup = catchAsyncErrors(async (req, res, next) => {
   const user = await User.create({
     name,
     email,
-    countryCode,
-    contact,
+    phone,
     password: hashedPassword,
     preferredLanguage,
     verified: false,
@@ -61,9 +65,9 @@ const signup = catchAsyncErrors(async (req, res, next) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      countryCode: user.countryCode,
-      contact: user.contact,
-      preferredLanguage: user.preferredLanguage
+      phone: user.phone,
+      preferredLanguage: user.preferredLanguage,
+      otp,
     }
   });
 });
@@ -107,13 +111,13 @@ const verifyOTP = catchAsyncErrors(async (req, res, next) => {
 
 // Signin
 const signin = catchAsyncErrors(async (req, res, next) => {
-  const { countryCode, contact, password } = req.body;
+  const { phone, password } = req.body;
 
-  if (!countryCode || !contact || !password) {
-    return next(new ErrorHandler("Country code, contact and password are required", 400));
+  if ( !phone || !password) {
+    return next(new ErrorHandler("phone number and password are required", 400));
   }
 
-  const user = await User.findOne({ countryCode, contact }).select("+password");
+  const user = await User.findOne({ phone }).select("+password");
 
   if (!user) {
     return next(new ErrorHandler("Invalid credentials", 401));
@@ -139,9 +143,8 @@ const signin = catchAsyncErrors(async (req, res, next) => {
     user: {
      
       name: user.name,
-      email: user.email,
-      countryCode: user.countryCode,
-      contact: user.contact,
+      email: user.email, 
+      phone: user.phone,
       preferredLanguage: user.preferredLanguage
     }
   });

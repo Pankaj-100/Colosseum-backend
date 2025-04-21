@@ -2,24 +2,120 @@ const { User } = require("../models/userModel");
 const bcryptjs = require("bcryptjs");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncError");
+const nodemailer = require("../utils/nodeMailer");
+
 const jwt = require("jsonwebtoken");
 
-// Admin Login
-const login = catchAsyncErrors(async (req, res, next) => {
-  const { email, password } = req.body;
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-  if (!email || !password) {
-    return next(new ErrorHandler("Email and password are required", 400));
+// Signup
+const signup = catchAsyncErrors(async (req, res, next) => {
+  const { name, email, phone, password, preferredLanguage } = req.body;
+
+  if (!name || !email || !phone || !password) {
+    return next(new ErrorHandler("All fields are required", 400));
   }
 
-  const user = await User.findOne({ email }).select("+password");
+  const existingUser = await User.findOne({ 
+    $or: [
+      { email },
+      { phone }
+    ] 
+  });
+
+  if (existingUser) {
+    if (existingUser.email === email) {
+      return next(new ErrorHandler("Email already registered", 400));
+    }
+    return next(new ErrorHandler("Phone number already registered", 400));
+  }
+
+  const hashedPassword = await bcryptjs.hash(password, 10);
+  
+  const otp = generateOTP();
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  const user = await User.create({
+    name,
+    email,
+    phone,
+    password: hashedPassword,
+    preferredLanguage,
+    verified: false,
+    otp,
+    otpExpires
+  });
+
+  const result = await nodemailer.verifyEmail(email, name, otp);
+  if (!result.success) {
+    return next(new ErrorHandler("Failed to send verification OTP", 500));
+  }
+
+  res.status(201).json({
+    success: true,
+    message: "OTP sent to your email for verification",
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      preferredLanguage: user.preferredLanguage
+    }
+  });
+});
+
+// Verify Email OTP
+const verifyOTP = catchAsyncErrors(async (req, res, next) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return next(new ErrorHandler("Email and OTP are required", 400));
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  if (user.verified) {
+    return next(new ErrorHandler("Email already verified", 400));
+  }
+
+  if (user.otp !== otp) {
+    return next(new ErrorHandler("Invalid OTP", 400));
+  }
+
+  if (new Date() > user.otpExpires) {
+    return next(new ErrorHandler("OTP has expired", 400));
+  }
+
+  user.verified = true;
+  user.otp = undefined;
+  user.otpExpires = undefined;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Email verified successfully",
+  });
+});
+
+// Signin
+const signin = catchAsyncErrors(async (req, res, next) => {
+  const { phone, password } = req.body;
+
+  if (!phone || !password) {
+    return next(new ErrorHandler("Phone and password are required", 400));
+  }
+
+  const user = await User.findOne({ phone }).select("+password");
 
   if (!user) {
     return next(new ErrorHandler("Invalid credentials", 401));
   }
 
-  if (user.role !== "admin") {
-    return next(new ErrorHandler("Not authorized as admin", 403));
+  if (!user.verified) {
+    return next(new ErrorHandler("Please verify your email first", 401));
   }
 
   const isPasswordValid = await bcryptjs.compare(password, user.password);
@@ -28,151 +124,60 @@ const login = catchAsyncErrors(async (req, res, next) => {
   }
 
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || "7d",
+    expiresIn: process.env.JWT_EXPIRE,
   });
 
   res.status(200).json({
     success: true,
-    message: "Admin login successful",
+    message: "Login successful",
     token,
-   
     user: {
-      id: user._id,
       name: user.name,
       email: user.email,
-      contact:user.contact,
-      role: user.role
+      phone: user.phone,
+      preferredLanguage: user.preferredLanguage
     }
   });
 });
 
-// Get Dashboard 
-const getDashboardData = catchAsyncErrors(async (req, res, next) => {
-  const excludeAdmin = { role: { $ne: "admin" } };
-  const totalUsers = await User.countDocuments(excludeAdmin);
-  res.status(200).json({
-    success: true,
-    data: {
-      totalUsers,
-    },
-  });
-});
+// Resend OTP
+const resendOTP = catchAsyncErrors(async (req, res, next) => {
+  const { email } = req.body;
 
-// Get All Users with Pagination
-const getAllUsers = catchAsyncErrors(async (req, res, next) => {
-  const excludeAdmin = { role: { $ne: "admin" } };
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+  if (!email) {
+    return next(new ErrorHandler("Email is required", 400));
+  }
 
-  const users = await User.find(excludeAdmin)
-    .select("-password -otp -otpExpires")
-    .skip(skip)
-    .limit(limit);
-
-  const totalUsers = await User.countDocuments(excludeAdmin);
-
-  res.status(200).json({
-    success: true,
-    count: users.length,
-    total: totalUsers,
-    page,
-    pages: Math.ceil(totalUsers / limit),
-    users
-  });
-});
-
-// Get Single User
-const getUser = catchAsyncErrors(async (req, res, next) => {
-  const user = await User.findById(req.params.id).select("-password ");
-
+  const user = await User.findOne({ email });
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
 
-  res.status(200).json({
-    success: true,
-    user
-  });
-});
-// Update User Details
-const updateUser = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.params;
-  const { name, email, contact, verified } = req.body;
-
-  const user = await User.findById(id);
-  if (!user) return next(new ErrorHandler("User not found", 404));
-
-  // Email check (excludes current user)
-  if (email && email !== user.email) {
-    const emailExists = await User.findOne({ 
-      email, 
-      _id: { $ne: id } 
-    });
-    if (emailExists) return next(new ErrorHandler("Email already in use", 400));
+  if (user.verified) {
+    return next(new ErrorHandler("Email already verified", 400));
   }
 
-  // Contact check (excludes current user)
-  if (contact && contact !== user.contact) {
-    const contactExists = await User.findOne({ 
-      contact, 
-      _id: { $ne: id } 
-    });
-    if (contactExists) {
-      return next(new ErrorHandler(
-        `Contact number already used by: ${contactExists.email}`,
-        400
-      ));
-    }
-  }
+  const otp = generateOTP();
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-  const updatedUser = await User.findByIdAndUpdate(
-    id,
-    { 
-      name: name || user.name,
-      email: email || user.email,
-      contact: contact || user.contact,
-      verified: verified ?? user.verified // Nullish coalescing
-    },
-    { 
-      new: true, 
-      runValidators: true 
-    }
-  ).select("-password -otp -otpExpires");
+  user.otp = otp;
+  user.otpExpires = otpExpires;
+  await user.save();
+
+  const result = await nodemailer.verifyEmail(email, user.name, otp);
+  if (!result.success) {
+    return next(new ErrorHandler("Failed to resend OTP", 500));
+  }
 
   res.status(200).json({
     success: true,
-    message: "User updated successfully",
-    user: updatedUser
+    message: "New OTP sent to your email"
   });
 });
-// Delete User
-const deleteUser = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.params;
-
-  const user = await User.findById(id);
-  if (!user) {
-    return next(new ErrorHandler("User not found", 404));
-  }
-
-  if (user.role === "admin") {
-    return next(new ErrorHandler("Cannot delete admin user", 403));
-  }
-
-  await User.findByIdAndDelete(id);
-
-  res.status(200).json({
-    success: true,
-    message: "User deleted successfully"
-  });
-});
-
 
 module.exports = {
-  login,
-  getDashboardData,
-  getAllUsers,
-  getUser,
-  updateUser,
-  deleteUser
+  signup,
+  verifyOTP,
+  signin,
+  resendOTP
 };
