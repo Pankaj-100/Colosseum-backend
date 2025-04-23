@@ -10,7 +10,7 @@ const { auth, isAdmin } = require("../middlewares/auth");
 
 const router = express.Router();
 router.route("/uploads/generate-urls").post(auth, isAdmin, getUploadParts);
-router.route("/get-upload-url").post(auth, isAdmin, getUploadURL);
+router.route("/get-upload-url").post( getUploadURL);
 router.route("/").get(auth, isAdmin, getVideos).post(auth, isAdmin, saveVideo);
 router.route("/uploads/initiate").post(auth, isAdmin, initiateMultipartUpload);
 
