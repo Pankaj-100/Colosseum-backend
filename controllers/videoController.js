@@ -23,18 +23,18 @@ const {
   // Get presigned url for upload video
  const getUploadURL = async (req, res, next) => {
     const { videoExtension } = req.body;
-  console.log("here1");
+ 
   
-   const data= "heelo"
-    console.log("here2");
-    // const data = await generateUploadURL(videoExtension);
-    console.log("here3");
-    // if (!data.uploadURL) return next(new ErrorHandler("URL not found", 404));
-    console.log("here4");
+     const data = await generateUploadURL(videoExtension);
+   
+     if (!data.uploadURL) return next(new ErrorHandler("URL not found", 404));
+
+
+
     res.status(200).json({
       success: true,
       message: "get upload url successful",
-    
+    data
     });
   };
 
@@ -235,7 +235,7 @@ const saveVideo = async (req, res, next) => {
   
     const [videos] = await Promise.all([videosQuery]);
   
-    res.status(StatusCodes.OK).json({
+    res.status(200).json({
       success: true,
       data: { videos },
       message: "Videos fetch successfully",

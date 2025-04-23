@@ -19,31 +19,7 @@ const s3 = new aws.S3({
   signatureVersion: "v4",
 });
 
-exports.s3UploadVideo = async (file, id, access) => {
-  const s3 = new aws.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_BUCKET_REGION,
-  });
 
-  const rawBytes = await randomBytes(16);
-  const imageName = rawBytes.toString("hex");
-  let key = `admin-uploads/${imageName}`;
-
-  if (access) {
-    key = `videos/${imageName}`;
-  }
-
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: key,
-    Body: file.buffer,
-  };
-
-  const data = await s3.upload(params).promise();
-  data.Location = imageName;
-  return data;
-};
 
 exports.generateUploadURL = async (fileExtension = "mp4") => {
   const rawBytes = await randomBytes(16);
