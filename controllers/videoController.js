@@ -30,8 +30,9 @@ const {
     const data = await generateUploadURL(videoExtension);
     if (!data.uploadURL) return next(new ErrorHandler("URL not found", 404));
   
-    res.status(StatusCodes.OK).json({
+    res.status(200).json({
       success: true,
+      message: "get upload url successful",
       data,
     });
   };
