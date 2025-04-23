@@ -50,7 +50,7 @@ exports.generateUploadURL = async (fileExtension = "mp4") => {
   const videoName = rawBytes.toString("hex");
 
   const uuid = generateUniqueId();
-  let key = `admin-uploads/${uuid}.${fileExtension}`;
+  let key = `${uuid}.${fileExtension}`;
 
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
