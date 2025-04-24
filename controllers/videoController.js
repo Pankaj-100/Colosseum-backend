@@ -81,7 +81,8 @@ const getUploadParts = async (req, res) => {
   const { uploadId, key, partCount } = data;
 
   if (!uploadId || !key || !partCount) {
-    throw new BadRequestError("Missing required parameters");
+    return next(new ErrorHandler(  "Missing required parameters", 400));
+  
   }
 
   const urls = [];
@@ -170,6 +171,9 @@ const abortMultipartUpload = async (req, res) => {
 
 // Save video with meta data in db
 const saveVideo = async (req, res, next) => {
+
+
+     
     let {
       title,
       description,
@@ -179,16 +183,19 @@ const saveVideo = async (req, res, next) => {
       duration,
    
     } = req.body;
+    console.log(req.body)
   
     if (!title || !description || !thumbnailUrl || !videoUrl) {
-      throw new BadRequestError("Please enter all required fields");
+     
+        
+        return next(new ErrorHandler("All fields are required", 400));
     }
   
     // Extract keys from url
-    if (videoUrl) videoUrl = extractURLKey(videoUrl);
-    if (thumbnailUrl) thumbnailUrl = extractURLKey(thumbnailUrl);
+    // if (videoUrl) videoUrl = extractURLKey(videoUrl);
+    // if (thumbnailUrl) thumbnailUrl = extractURLKey(thumbnailUrl);
  
-  
+
     const videoData = {
       title,
       description,
@@ -200,16 +207,17 @@ const saveVideo = async (req, res, next) => {
     };
   
  
-
+   
   
     // Save video
     const video = await Video.create(videoData);
   
     if (!video) {
-      throw new BadRequestError("Video not saved");
+        return next(new ErrorHandler("video not saved", 400));
+
     }
   
-    res.status(StatusCodes.CREATED).json({
+    res.status(200).json({
       success: true,
       message: "Video saved successfully",
     });
@@ -241,83 +249,7 @@ const saveVideo = async (req, res, next) => {
       message: "Videos fetch successfully",
     });
   };
-  // Save video with meta data in db
-exports.saveVideo = async (req, res, next) => {
-  let {
-    title,
-    description,
-    thumbnailUrl,
-    videoUrl,
-    course,
-    module,
-    submodule,
-    duration,
-    assignment,
-  } = req.body;
 
-  if (!title || !description || !thumbnailUrl || !videoUrl) {
-    throw new BadRequestError("Please enter all required fields");
-  }
-
-  // Extract keys from url
-  if (videoUrl) videoUrl = extractURLKey(videoUrl);
-  if (thumbnailUrl) thumbnailUrl = extractURLKey(thumbnailUrl);
-  if (assignment) assignment = extractURLKey(assignment);
-
-  const videoData = {
-    title,
-    description,
-    thumbnailUrl,
-    videoUrl,
-    course: course || null,
-    module: course && module ? module : null,
-    submodule: course && module ? submodule : null,
-    duration,
-    assignment,
-    sequence: 0,
-  };
-
-  let isFreeCourse = false;
-  let existingCourse = null;
-
-  // Find existing course
-  if (course) {
-    existingCourse = await courseModel.findById(course);
-    if (course && !existingCourse) {
-      throw new BadRequestError("Course not found");
-    }
-    isFreeCourse = existingCourse.isFree;
-  }
-
-  if (existingCourse) {
-    if (!isFreeCourse) {
-      if (!module) throw new BadRequestError("Please enter module id");
-      if (!submodule) throw new BadRequestError("Please enter submodule id");
-
-      videoData.module = module;
-      videoData.submodule = submodule;
-    }
-
-    const sequence = await VideoModel.getNextSequence({
-      course,
-      submodule,
-    });
-
-    videoData.sequence = sequence;
-  }
-
-  // Save video
-  const video = await VideoModel.create(videoData);
-
-  if (!video) {
-    throw new BadRequestError("Video not saved");
-  }
-
-  res.status(StatusCodes.CREATED).json({
-    success: true,
-    message: "Video saved successfully",
-  });
-};
 
 
   
