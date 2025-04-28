@@ -1,4 +1,4 @@
-const  ActivationCode  = require("../models/activationCodeModel");
+const  {ActivationCode}  = require("../models/ActivationCodeModel");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncError");
 

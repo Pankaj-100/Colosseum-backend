@@ -48,5 +48,6 @@ ActivationCodeSchema.pre('save', async function (next) {
 ActivationCodeSchema.methods.verifyCode = async function (candidateCode) {
   return await bcrypt.compare(candidateCode, this.code);
 };
+const ActivationCode = mongoose.model("ActivationCode", ActivationCodeSchema);
 
-module.exports = mongoose.model('ActivationCode', ActivationCodeSchema);
+module.exports = { ActivationCode };
