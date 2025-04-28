@@ -47,18 +47,13 @@ exports.validateCode = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Code and device ID are required", 400));
   }
 
-  // Find all unused codes
-  const codes = await ActivationCode.find({ isUsed: false });
+// 1. Find the code directly in database (no need to fetch all codes)
+const matchedCode = await ActivationCode.findOne({ 
+    code: code,        // Direct string comparison
+      // Only unused codes
+  });
 
-  // Check for matching code  
-  let matchedCode = null;
-  for (const dbCode of codes) {
-    const isMatch = await dbCode.verifyCode(code);
-    if (isMatch) {
-      matchedCode = dbCode;
-      break;
-    }
-  }
+
 
   if (!matchedCode) {
     return next(new ErrorHandler("Invalid activation code", 400));
@@ -72,7 +67,7 @@ exports.validateCode = catchAsyncErrors(async (req, res, next) => {
 
   // Activate the code
   matchedCode.isUsed = true;
-  matchedCode.usedBy = req.user._id;
+  matchedCode.usedBy =   req.userId;
   matchedCode.deviceId = deviceId;
   matchedCode.usedAt = new Date();
   matchedCode.expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
