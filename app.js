@@ -7,6 +7,7 @@ const authRoute = require("./routes/authRoute");
 const adminRoute = require("./routes/adminRoute");
 const videoRoute = require("./routes/videoRoute");
 const codeRoute=require("./routes/codeRoute");
+const userRoutes=require("./routes/userRoutes")
 dotenv.config({ path: "./config/config.env" });
 
 app.use(express.json());
@@ -21,6 +22,7 @@ app.use(
 );
 app.get("/", (req, res, next) => res.json({ anc: "abc" }));
 app.use("/api/auth", authRoute);
+app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoute);
 app.use("/api/video", videoRoute);
 app.use("/api/code", codeRoute);
