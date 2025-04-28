@@ -44,15 +44,11 @@ const videoSchema = new mongoose.Schema(
           type: {
             type: String,
             enum: ['Point'],
-            required: function() {
-              return this.geolocationSettings.isGeolocationEnabled;
-            }
+          
           },
           coordinates: {
             type: [Number],  // [longitude, latitude]
-            required: function() {
-              return this.geolocationSettings.isGeolocationEnabled;
-            },
+        
             validate: {
               validator: function(v) {
                 return v.length === 2 && 
@@ -64,9 +60,7 @@ const videoSchema = new mongoose.Schema(
           },
           radius: {
             type: Number,  // in meters
-            required: function() {
-              return this.geolocationSettings.isGeolocationEnabled;
-            },
+         
             min: [1, 'Radius must be at least 1 meter'],
             max: [100000, 'Radius cannot exceed 100km']
           },

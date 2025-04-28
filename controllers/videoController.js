@@ -181,6 +181,7 @@ const saveVideo = async (req, res, next) => {
       videoUrl,
       language,
       duration,
+      geolocationSettings
    
     } = req.body;
     console.log(req.body)
@@ -192,8 +193,8 @@ const saveVideo = async (req, res, next) => {
     }
   
     // Extract keys from url
-    // if (videoUrl) videoUrl = extractURLKey(videoUrl);
-    // if (thumbnailUrl) thumbnailUrl = extractURLKey(thumbnailUrl);
+    if (videoUrl) videoUrl = extractURLKey(videoUrl);
+    if (thumbnailUrl) thumbnailUrl = extractURLKey(thumbnailUrl);
  
 
     const videoData = {
@@ -203,12 +204,9 @@ const saveVideo = async (req, res, next) => {
       videoUrl,
       duration,
       language,
-
+      geolocationSettings,
     };
-  
- 
-   
-  
+
     // Save video
     const video = await Video.create(videoData);
   
@@ -226,7 +224,6 @@ const saveVideo = async (req, res, next) => {
   // Fetch all videos
   const getVideos = async (req, res, next) => {
     const videosQuery = Video.aggregate([
-     
       {
         // Stage 1, append aws url
         $addFields: {
@@ -239,11 +236,9 @@ const saveVideo = async (req, res, next) => {
         },
       },
     ]);
-  
-  
     const [videos] = await Promise.all([videosQuery]);
-  
-    res.status(200).json({
+    console.log(videos);
+    res.status(200).json({  
       success: true,
       data: { videos },
       message: "Videos fetch successfully",
