@@ -1,4 +1,4 @@
-const  {ActivationCode}  = require("../models/ActivationCodeModel");
+const  {ActivationCode}  = require("../models/activationCodeModel");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncError");
 
@@ -50,7 +50,7 @@ exports.validateCode = catchAsyncErrors(async (req, res, next) => {
   // Find all unused codes
   const codes = await ActivationCode.find({ isUsed: false });
 
-  // Check for matching code  k
+  // Check for matching code  
   let matchedCode = null;
   for (const dbCode of codes) {
     const isMatch = await dbCode.verifyCode(code);
