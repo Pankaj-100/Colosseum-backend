@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-const { EMAIL_VERIFY } = require("./emailTemplate");
+const { EMAIL_VERIFY,reset_password } = require("./emailTemplate");
 const dotenv = require("dotenv");
 
 dotenv.config({ path: "./config/config.env" });
@@ -44,8 +44,16 @@ const verifyEmail = async (email, name, otp) => {
   return await sendMail(email, subject, html);
 };
 
+const forgotpassword = async (email, name, otp) => {
+  console.log(" Attempting to send email to:", email); // Add this line
+  const subject = "OTP Verification";
+  const html = await reset_password(name, otp);
+  return await sendMail(email, subject, html);
+};
+
 
 module.exports = {
   sendMail,
   verifyEmail,
+  forgotpassword
 };

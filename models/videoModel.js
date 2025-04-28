@@ -29,9 +29,11 @@ const videoSchema = new mongoose.Schema(
     },
     language: {
       type: String,
-      trim: true,
-      required: [true, "Please enter video language"],
+      required: true,
+      enum: ['English', 'Spanish', 'French', 'German', 'Italian','Arabic','Chinese','Japanese','korean'], 
+      default: 'English'
     },
+  
     // Geolocation settings
     geolocationSettings: {
       isGeolocationEnabled: {

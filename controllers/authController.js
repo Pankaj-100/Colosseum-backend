@@ -186,9 +186,88 @@ const resendOTP = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+// Request OTP for password reset
+const forgotPasswordRequestOTP = catchAsyncErrors(async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) return next(new ErrorHandler("Email is required", 400));
+
+  const user = await User.findOne({ email });
+  if (!user) return next(new ErrorHandler("User not found", 404));
+
+  // Generate and save OTP
+  const otp = generateOTP();
+  user.resetPasswordOTP = otp;
+  user.resetPasswordExpires = Date.now() + 10*60*1000; // 10 minutes
+  await user.save();
+
+  // Send OTP via email
+  const result = await nodemailer.forgotpassword(email, user.name, otp);
+  if (!result.success) return next(new ErrorHandler("Failed to send OTP", 500));
+
+  res.status(200).json({
+    success: true,
+    message: "OTP sent to your email",
+    email,
+    otp
+  });
+});
+
+//  Verify OTP
+const forgotPasswordVerifyOTP = catchAsyncErrors(async (req, res, next) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) return next(new ErrorHandler("Email and OTP required", 400));
+
+  const user = await User.findOne({ 
+    email,
+    resetPasswordOTP: otp,
+    resetPasswordExpires: { $gt: Date.now() }
+  });
+
+  if (!user) return next(new ErrorHandler("Invalid OTP or expired", 400));
+
+  user.resetPasswordOTP = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "OTP verified successfully",
+    email
+  });
+});
+
+//  Reset Password
+const forgotPasswordReset = catchAsyncErrors(async (req, res, next) => {
+  const { email, newPassword } = req.body;
+
+  if (!email ||  !newPassword)
+    return next(new ErrorHandler("All fields required", 400));
+
+  const user = await User.findOne({
+    email
+  });
+
+
+
+  // Update password 
+  user.password = await bcryptjs.hash(newPassword, 10);
+
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Password reset successfully"
+  });
+});
+
 module.exports = {
   signup,
   verifyOTP,
   signin,
-  resendOTP
+  resendOTP,
+  forgotPasswordRequestOTP,
+  forgotPasswordVerifyOTP,
+  forgotPasswordReset
 };

@@ -1,10 +1,14 @@
 const express = require("express");
-const {profile} = require("../controllers/userController");
+const {profile,uploadProfileImages,updateProfile,getVideos} = require("../controllers/userController");
 const router = express.Router();
 const { auth } = require("../middlewares/auth");
+const { upload } = require('../utils/s3');
 
 
-router.post('/profile',auth,profile)
+router.get('/profile',auth,profile)
+router.post('/profile/image', auth, upload.single('image'), uploadProfileImages);
+router.put('/profile', auth, upload.single('profileImage'), updateProfile);
+router.get('/video', auth,  getVideos);
 
 
 

@@ -18,7 +18,47 @@ const s3 = new aws.S3({
   region: process.env.AWS_BUCKET_REGION,
   signatureVersion: "v4",
 });
+//Profile Image Upload/Update
+exports.uploadProfileImage = async (file, userId) => {
+  if (!file || !file.mimetype.startsWith('image/')) {
+    throw new Error('Only image files are allowed');
+  }
+  const buffer = await sharp(file.buffer)
+    .webp({ quality: 80 })
+    .resize(500, 500)
+    .toBuffer();
 
+  const key = `profile-images/${userId}.webp`;
+
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+    Body: buffer,
+    ContentType: 'image/webp',
+    // ACL: 'public-read'
+  };
+  const data = await s3.upload(params).promise();
+  
+  return {
+    imageUrl: data.Location,
+    imageKey: key
+  };
+};
+
+exports.deleteProfileImage = async (userId) => {
+  const key = `profile-images/${userId}.webp`;
+  
+  try {
+    await s3.deleteObject({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key
+    }).promise();
+    return true;
+  } catch (error) {
+    console.error('Error deleting profile image:', error);
+    return false;
+  }
+};
 
 
 exports.generateUploadURL = async (fileExtension = "mp4") => {

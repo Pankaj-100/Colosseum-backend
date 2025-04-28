@@ -40,7 +40,18 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       default: 'user',
-    }
+    },
+    profileImage: {
+      type: String,
+      default: null
+    },
+    resetPasswordOTP: {
+      type: String
+    },
+    resetPasswordExpires: {
+      type: Date
+    },
+
   },
   { timestamps: true }
 );
