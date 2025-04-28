@@ -37,17 +37,7 @@ const ActivationCodeSchema = new mongoose.Schema({
   },
 });
 
-// Hash the code before saving
-ActivationCodeSchema.pre('save', async function (next) {
-  if (!this.isModified('code')) return next();
-  this.code = await bcrypt.hash(this.code, 8);
-  next();
-});
 
-// Method to check if code matches
-ActivationCodeSchema.methods.verifyCode = async function (candidateCode) {
-  return await bcrypt.compare(candidateCode, this.code);
-};
 const ActivationCode = mongoose.model("ActivationCode", ActivationCodeSchema);
 
 module.exports = { ActivationCode };
