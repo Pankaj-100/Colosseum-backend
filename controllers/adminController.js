@@ -1,4 +1,5 @@
 const { User } = require("../models/userModel");
+const { Video } = require("../models/videoModel");
 const bcryptjs = require("bcryptjs");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncError");
