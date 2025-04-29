@@ -238,9 +238,11 @@ const saveVideo = async (req, res, next) => {
     ]);
     const [videos] = await Promise.all([videosQuery]);
     console.log(videos);
+    const totalVideos = await Video.countDocuments();
     res.status(200).json({  
       success: true,
       data: { videos },
+      totalVideos ,
       message: "Videos fetch successfully",
     });
   };
