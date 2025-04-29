@@ -50,10 +50,12 @@ const login = catchAsyncErrors(async (req, res, next) => {
 const getDashboardData = catchAsyncErrors(async (req, res, next) => {
   const excludeAdmin = { role: { $ne: "admin" } };
   const totalUsers = await User.countDocuments(excludeAdmin);
+  const totalVideos = await Video.countDocuments();
   res.status(200).json({
     success: true,
     data: {
       totalUsers,
+      totalVideos,
     },
   });
 });
