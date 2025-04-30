@@ -246,10 +246,66 @@ const saveVideo = async (req, res, next) => {
       message: "Videos fetch successfully",
     });
   };
-
+  const deleteVideo = catchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
   
+    const video = await Video.findById(id);
+    if (!video) {
+      return next(new ErrorHandler("Video not found", 404));
+    }
   
-module.exports = {getUploadURL,initiateMultipartUpload,getUploadParts,completeMultipartUpload,abortMultipartUpload,saveVideo,getVideos
+    // Delete both video and thumbnail from S3
+    await s3delete(video.videoUrl);
+    await s3delete(video.thumbnailUrl);
+  
+    await Video.findByIdAndDelete(id);
+  
+    res.status(200).json({
+      success: true,
+      message: "Video deleted successfully",
+    });
+  });
+  
+  const updateVideoDetails = catchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
+    const updates = req.body;
+  
+    // Allowed fields for update
+    const allowedUpdates = ['title', 'description', 'thumbnailUrl', 'videoUrl', 
+                          'duration', 'language', 'geolocationSettings'];
     
+    // Filter valid updates
+    const validUpdates = Object.keys(updates).filter(key => allowedUpdates.includes(key));
+    const updateData = {};
+    
+    validUpdates.forEach(key => {
+      if (key === 'videoUrl' || key === 'thumbnailUrl') {
+        updateData[key] = extractURLKey(updates[key]);
+      } else {
+        updateData[key] = updates[key];
+      }
+    });
+  
+    const video = await Video.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
+  
+    if (!video) {
+      return next(new ErrorHandler("Video not found", 404));
+    }
+  
+    res.status(200).json({
+      success: true,
+      message: "Video updated successfully",
+      data: video,
+    });
+  });
+  
 
+
+  
+  
+module.exports = {getUploadURL,initiateMultipartUpload,getUploadParts,completeMultipartUpload,
+  abortMultipartUpload,saveVideo,getVideos , deleteVideo,updateVideoDetails
 };
