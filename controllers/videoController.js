@@ -248,6 +248,7 @@ const saveVideo = async (req, res, next) => {
   };
   const deleteVideo = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params;
+  console.log("hello");
   
     const video = await Video.findById(id);
     if (!video) {

@@ -13,9 +13,9 @@ const { auth, isAdmin } = require("../middlewares/auth");
 const router = express.Router();
 
 router.route("/get-upload-url").post(auth, isAdmin,getUploadURL);
-router.route("/").get( auth, isAdmin, getVideos);
-router.route("/").put( auth, isAdmin, getVideos);
-router.route("/").delete( auth, isAdmin, deleteVideo);
+router.route("").get( auth, isAdmin, getVideos);
+router.route("/:id").put( auth, isAdmin, getVideos);
+router.route("/:id").delete( auth, isAdmin, deleteVideo);
 router.route("/save").post(auth, isAdmin,  updateVideoDetails);
 
 router.route("/uploads/generate-urls").post(auth, isAdmin, getUploadParts);
