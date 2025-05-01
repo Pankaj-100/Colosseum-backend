@@ -14,9 +14,9 @@ const router = express.Router();
 
 router.route("/get-upload-url").post(auth, isAdmin,getUploadURL);
 router.route("").get( auth,  getVideos);
-router.route("/:id").put( auth, getVideos);
+router.route("/:id").put( auth, isAdmin,updateVideoDetails);
 router.route("/:id").delete( auth, isAdmin, deleteVideo);
-router.route("/save").post(auth, isAdmin,  updateVideoDetails);
+router.route("/save").post(auth, isAdmin,  saveVideo);
 
 router.route("/uploads/generate-urls").post(auth, isAdmin, getUploadParts);
 router.route("/uploads/initiate").post(auth, isAdmin, initiateMultipartUpload);
