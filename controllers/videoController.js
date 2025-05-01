@@ -9,7 +9,7 @@ const crypto = require("crypto");
 const { promisify } = require("util");
 const mime = require("mime-types");
 
-const {generateUploadURL}=require("../utils/s3")
+const {generateUploadURL,s3delete}=require("../utils/s3")
 const { Video } = require("../models/videoModel");
 
 const {
