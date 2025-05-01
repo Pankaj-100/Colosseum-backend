@@ -13,8 +13,8 @@ const { auth, isAdmin } = require("../middlewares/auth");
 const router = express.Router();
 
 router.route("/get-upload-url").post(auth, isAdmin,getUploadURL);
-router.route("").get( auth, isAdmin, getVideos);
-router.route("/:id").put( auth, isAdmin, getVideos);
+router.route("").get( auth,  getVideos);
+router.route("/:id").put( auth, getVideos);
 router.route("/:id").delete( auth, isAdmin, deleteVideo);
 router.route("/save").post(auth, isAdmin,  updateVideoDetails);
 
