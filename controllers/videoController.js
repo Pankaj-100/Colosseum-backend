@@ -246,6 +246,36 @@ const saveVideo = async (req, res, next) => {
       message: "Videos fetch successfully",
     });
   };
+
+  const getSingleVideo = catchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
+  
+    const video = await Video.aggregate([
+      {
+        $match: { _id: mongoose.Types.ObjectId(id) }
+      },
+      {
+        $addFields: {
+          thumbnailUrl: {
+            $concat: [awsUrl, "/", "$thumbnailUrl"]
+          },
+          videoUrl: {
+            $concat: [awsUrl, "/", "$videoUrl"]
+          }
+        }
+      }
+    ]);
+  
+    if (!video || video.length === 0) {
+      return next(new ErrorHandler("Video not found", 404));
+    }
+  
+    res.status(200).json({
+      success: true,
+      data: video[0],
+      message: "Video fetched successfully"
+    });
+  });
   const deleteVideo = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params;
   console.log(id);
@@ -308,5 +338,5 @@ const saveVideo = async (req, res, next) => {
   
   
 module.exports = {getUploadURL,initiateMultipartUpload,getUploadParts,completeMultipartUpload,
-  abortMultipartUpload,saveVideo,getVideos , deleteVideo,updateVideoDetails
+  abortMultipartUpload,saveVideo,getVideos , deleteVideo,updateVideoDetails,getSingleVideo
 };
