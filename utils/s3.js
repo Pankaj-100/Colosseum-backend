@@ -250,6 +250,35 @@ exports.s3UploadMulti = async (files) => {
   return await Promise.all(params.map((param) => s3.upload(param).promise()));
 };
 
+exports.uploadLocationImage = async (file, locationName) => {
+  if (!file || !file.mimetype.startsWith("image/")) {
+    throw new Error("Only image files are allowed");
+  }
+
+  const buffer = await sharp(file.buffer)
+    .webp({ quality: 80 })
+    .resize(600, 400) // Adjust dimensions if needed
+    .toBuffer();
+
+  const sanitizedName = locationName.toLowerCase().replace(/\s+/g, "-");
+  const key = `location-thumbnails/${sanitizedName}-${Date.now()}.webp`;
+
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+    Body: buffer,
+    ContentType: "image/webp",
+  };
+
+  const data = await s3.upload(params).promise();
+
+  return {
+    imageUrl: data.Location,
+    imageKey: key,
+  };
+};
+
+
 const storage = multer.memoryStorage();
 
 const blockedMimeTypes = [

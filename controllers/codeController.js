@@ -1,115 +1,126 @@
-const  {ActivationCode}  = require("../models/activationCodeModel");
+const crypto = require('crypto');
+const ActivationCode = require("../models/activationCodeModel");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncError");
 
+// HMAC secret (for frontend validation)
+const HMAC_SECRET = process.env.HMAC_SECRET || 'supersecretkey123';
 
-// Generate random 4-digit activation code
-const generateActivationCode = () => Math.floor(1000 + Math.random() * 9000).toString();
+// AES secret (for decrypting plain code to admin)
+const ENC_SECRET = process.env.ENC_SECRET || 'encryptionsecret1234567890123456'; // must be 32 chars
+const IV = Buffer.alloc(16, 0); // 16-byte IV for AES
 
-// Generate codes in bulk (Admin only)
+// HMAC hash generator (frontend-compatible)
+function hashCode(code) {
+  return crypto
+    .createHmac("sha256", HMAC_SECRET)
+    .update(code)
+    .digest("hex");
+}
+
+// AES Encrypt / Decrypt
+function encrypt(text) {
+  const cipher = crypto.createCipheriv("aes-256-cbc", ENC_SECRET, IV);
+  let encrypted = cipher.update(text, "utf8", "hex");
+  encrypted += cipher.final("hex");
+  return encrypted;
+}
+
+function decrypt(encrypted) {
+  const decipher = crypto.createDecipheriv("aes-256-cbc", ENC_SECRET, IV);
+  let decrypted = decipher.update(encrypted, "hex", "utf8");
+  decrypted += decipher.final("utf8");
+  return decrypted;
+}
+
+// Helper: generate random 6-digit codes
+const generateActivationCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+// ✅ Admin: Generate activation codes (returns plain codes to admin)
 exports.generateCodes = catchAsyncErrors(async (req, res, next) => {
-  const { count = 20 } = req.body;
-  
-  if (!count || count <= 0) {
-    return next(new ErrorHandler("Invalid count value", 400));
+  const { count } = req.body;
+
+  if (!count || count <= 0 || count > 100) {
+    return next(new ErrorHandler("Count must be between 1 and 100", 400));
   }
 
-  const codes = [];
-  const rawCodes = [];
-  
-  // Generate codes
-  for (let i = 0; i < count; i++) {
-    const rawCode = generateActivationCode();
-    rawCodes.push(rawCode);
-    codes.push({
-      code: rawCode, 
+  const plainCodes = new Set();
+  const hashedRecords = [];
+
+  while (plainCodes.size < count) {
+    const code = generateActivationCode();
+    const hash = hashCode(code);
+    const encrypted = encrypt(code);
+
+    // Ensure uniqueness
+    if ([...plainCodes].some(c => hashCode(c) === hash)) continue;
+
+    plainCodes.add(code);
+
+    hashedRecords.push({
+      hashedCode: hash,
+      encryptedCode: encrypted,
       generatedBy: req.user._id
     });
   }
 
+  try {
+    await ActivationCode.insertMany(hashedRecords, { ordered: false });
+  } catch (err) {
+    return next(new ErrorHandler("Failed to insert activation codes", 500));
+  }
 
-  await ActivationCode.insertMany(codes);
-
- 
   res.status(201).json({
     success: true,
-    count: codes.length,
-    codes: rawCodes,
-    message: "Activation codes generated successfully"
+    count: plainCodes.size,
+    codes: Array.from(plainCodes),
+    message: "Activation codes generated"
   });
 });
 
-// Validate activation code (User)
-exports.validateCode = catchAsyncErrors(async (req, res, next) => {
-  const { code, deviceId } = req.body;
-
-  if (!code || !deviceId) {
-    return next(new ErrorHandler("Code and device ID are required", 400));
-  }
-
-// 1. Find the code directly in database (no need to fetch all codes)
-const matchedCode = await ActivationCode.findOne({ 
-    code: code,        // Direct string comparison
-      // Only unused codes
-  });
-
-
-
-  if (!matchedCode) {
-    return next(new ErrorHandler("Invalid activation code", 400));
-  }
-
-  // Check if this device already used any code
-  const deviceCode = await ActivationCode.findOne({ deviceId });
-  if (deviceCode) {
-    return next(new ErrorHandler("This device already has an active code", 400));
-  }
-
-  // Activate the code
-  matchedCode.isUsed = true;
-  matchedCode.usedBy =   req.userId;
-  matchedCode.deviceId = deviceId;
-  matchedCode.usedAt = new Date();
-  matchedCode.expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
-  await matchedCode.save();
-
-  res.status(200).json({
-    success: true,
-    expiresAt: matchedCode.expiresAt,
-    message: "Code activated successfully for 48 hours"
-  });
-});
-
-// Get active codes (Admin)
+// ✅ Admin: View all codes with decrypted plainCode
 exports.getActiveCodes = catchAsyncErrors(async (req, res, next) => {
-  const { showAll } = req.query;
+  const codes = await ActivationCode.find()
+    .populate("generatedBy", "name")
+    .lean();
 
-  const query = showAll 
-    ? {} 
-    : { expiresAt: { $gt: new Date() } };
-
-  const codes = await ActivationCode.find(query)
-    .populate("usedBy", "name email phone")
-    .populate("generatedBy", "name");
+  const codesWithPlain = codes.map(c => ({
+    ...c,
+    plainCode: decrypt(c.encryptedCode)
+  }));
 
   res.status(200).json({
     success: true,
-    count: codes.length,
-    codes
+    count: codesWithPlain.length,
+    codes: codesWithPlain
   });
 });
 
-// Revoke code (Admin)
+// ✅ Admin: Revoke a code using the plain code
 exports.revokeCode = catchAsyncErrors(async (req, res, next) => {
-  const code = await ActivationCode.findByIdAndDelete(req.params.id);
+  const { plainCode } = req.body;
+  if (!plainCode) return next(new ErrorHandler("plainCode is required", 400));
 
-  if (!code) {
-    return next(new ErrorHandler("Activation code not found", 404));
+  const hash = hashCode(plainCode);
+  const result = await ActivationCode.findOneAndDelete({ hashedCode: hash });
+
+  if (!result) {
+    return next(new ErrorHandler("Code not found or already revoked", 404));
   }
 
   res.status(200).json({
     success: true,
-    message: "Activation code revoked successfully"
+    message: "Code revoked"
   });
 });
 
+// ✅ Public: Send all hashed codes (for offline validation on frontend)
+exports.getCodeHashes = catchAsyncErrors(async (req, res, next) => {
+  const codes = await ActivationCode.find().select("hashedCode -_id");
+
+  res.status(200).json({
+    success: true,
+    count: codes.length,
+    hashes: codes.map(c => c.hashedCode)
+  });
+});

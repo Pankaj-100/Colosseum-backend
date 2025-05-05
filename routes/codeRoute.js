@@ -2,19 +2,19 @@ const express = require("express");
 const router = express.Router();
 const {
   generateCodes,
-  validateCode,
   getActiveCodes,
   revokeCode,
- 
+  getCodeHashes
 } = require("../controllers/codeController");
+
 const { auth, isAdmin } = require("../middlewares/auth");
 
 // Admin routes
 router.post("/generate", auth, isAdmin, generateCodes);
 router.get("/active", auth, isAdmin, getActiveCodes);
-router.delete("/:id", auth, isAdmin, revokeCode);
+router.delete("/revoke", auth, isAdmin, revokeCode);
 
-// User routes
-router.post("/validate", auth, validateCode);
+// Public route for mobile app
+router.get("/hashes", getCodeHashes);
 
 module.exports = router;

@@ -1,43 +1,38 @@
-// models/ActivationCode.js
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 
 const ActivationCodeSchema = new mongoose.Schema({
-  code: {
+  hashedCode: {
     type: String,
     required: true,
-    unique: true,
-    trim: true,
+    unique: true
   },
-  isUsed: {
-    type: Boolean,
-    default: false,
-  },
-  usedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  deviceId: {  // Track which device used this code
+  encryptedCode: {
     type: String,
+    required: true
   },
-  usedAt: {
-    type: Date,
-  },
-  expiresAt: {  // 48 hours from first use
-    type: Date,
-  },
+  activations: [{
+    deviceId: {
+      type: String,
+      required: true
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    activatedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   createdAt: {
     type: Date,
-    default: Date.now,
+    default: Date.now
   },
   generatedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-  },
+  }
 });
 
-
-const ActivationCode = mongoose.model("ActivationCode", ActivationCodeSchema);
-
-module.exports = { ActivationCode };
+const ActivationCode = mongoose.model('ActivationCode', ActivationCodeSchema);
+module.exports = ActivationCode;
