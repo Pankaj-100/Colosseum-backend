@@ -178,6 +178,7 @@ const saveVideo = async (req, res, next) => {
       title,
       description,
       thumbnailUrl,
+      primaryLocation,
       videoUrl,
       language,
       duration,
@@ -203,6 +204,7 @@ const saveVideo = async (req, res, next) => {
       thumbnailUrl,
       videoUrl,
       duration,
+      primaryLocation,
       language,
       geolocationSettings,
     };

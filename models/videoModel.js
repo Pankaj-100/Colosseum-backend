@@ -34,9 +34,8 @@ const videoSchema = new mongoose.Schema(
       default: 'English'
     },
     primaryLocation: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Location',
-      required: true
+      type: String,
+     
     },
   
     // Geolocation settings
