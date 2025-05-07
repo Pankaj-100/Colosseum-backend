@@ -12,34 +12,59 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 
 // Signup
 const signup = catchAsyncErrors(async (req, res, next) => {
-  const { name, email,phone,password, preferredLanguage  } = req.body;
+  const { name, email, phone, password, preferredLanguage } = req.body;
 
   if (!name || !email || !phone || !password) {
     return next(new ErrorHandler("All fields are required", 400));
   }
+
   if (!isValidPhoneNumber(phone)) {
     return res.status(400).json({ message: "Invalid phone number format" });
   }
-  
 
-  const existingUser = await User.findOne({ 
-    $or: [
-      { email },
-      { phone }
-    ] 
-  });
+  const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
 
   if (existingUser) {
-    if (existingUser.email === email) {
-      return next(new ErrorHandler("Email already registered", 400));
+    if (existingUser.verified) {
+      return next(new ErrorHandler("Email or phone number already registered", 400));
     }
-    return next(new ErrorHandler("Phone number already registered", 400));
+
+    // If user exists but is not verified, restart the OTP process
+    const otp = generateOTP();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+    existingUser.name = name;
+    existingUser.password = await bcryptjs.hash(password, 10);
+    existingUser.preferredLanguage = preferredLanguage || "Spanish";
+    existingUser.otp = otp;
+    existingUser.otpExpires = otpExpires;
+
+    await existingUser.save();
+
+    const result = await nodemailer.verifyEmail(email, name, otp);
+    if (!result.success) {
+      return next(new ErrorHandler("Failed to send verification OTP", 500));
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "New OTP sent to your email for verification",
+      user: {
+        _id: existingUser._id,
+        name: existingUser.name,
+        email: existingUser.email,
+        phone: existingUser.phone,
+        preferredLanguage: existingUser.preferredLanguage,
+        otp,
+      },
+    });
   }
 
+  // Create new user if none exists
   const hashedPassword = await bcryptjs.hash(password, 10);
-  
+
   const otp = generateOTP();
-  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
   const user = await User.create({
     name,
@@ -49,9 +74,8 @@ const signup = catchAsyncErrors(async (req, res, next) => {
     preferredLanguage,
     verified: false,
     otp,
-    otpExpires
+    otpExpires,
   });
-
 
   const result = await nodemailer.verifyEmail(email, name, otp);
   if (!result.success) {
@@ -68,9 +92,10 @@ const signup = catchAsyncErrors(async (req, res, next) => {
       phone: user.phone,
       preferredLanguage: user.preferredLanguage,
       otp,
-    }
+    },
   });
 });
+
 
 // Verify Email OTP
 const verifyOTP = catchAsyncErrors(async (req, res, next) => {
