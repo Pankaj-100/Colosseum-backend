@@ -185,7 +185,7 @@ const saveVideo = async (req, res, next) => {
       geolocationSettings
    
     } = req.body;
-    console.log(req.body)
+    console.log(primaryLocation)
   
     if (!title || !description || !thumbnailUrl || !videoUrl) {
      
@@ -336,9 +336,6 @@ const saveVideo = async (req, res, next) => {
   });
   
 
-
-  
-  
 module.exports = {getUploadURL,initiateMultipartUpload,getUploadParts,completeMultipartUpload,
   abortMultipartUpload,saveVideo,getVideos , deleteVideo,updateVideoDetails,getSingleVideo
 };

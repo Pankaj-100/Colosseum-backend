@@ -34,7 +34,7 @@ function decrypt(encrypted) {
 }
 
 // Helper: generate random 6-digit codes
-const generateActivationCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+const generateActivationCode = () => Math.floor(1000 + Math.random() * 9000).toString();
 
 // ✅ Admin: Generate activation codes (returns plain codes to admin)
 exports.generateCodes = catchAsyncErrors(async (req, res, next) => {

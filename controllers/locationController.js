@@ -12,6 +12,7 @@ exports.createLocation = catchAsyncErrors(async (req, res, next) => {
 
   const { imageUrl } = await uploadLocationImage(req.file, name);
 
+ 
   const location = await Location.create({
     name,
     thumbnailUrl: imageUrl
