@@ -335,7 +335,31 @@ const saveVideo = async (req, res, next) => {
     });
   });
   
+  const filterVideos = async (req, res, next) => {
+    const { language, primaryLocation } = req.body;
+  
+    const filter = {};
+    if (language) filter.language = language;
+    if (primaryLocation) filter.primaryLocation = primaryLocation;
+  
+    const videos = await Video.aggregate([
+      { $match: filter },
+      {
+        $addFields: {
+          thumbnailUrl: { $concat: [awsUrl, "/", "$thumbnailUrl"] },
+          videoUrl: { $concat: [awsUrl, "/", "$videoUrl"] },
+        },
+      },
+    ]);
+  
+    res.status(200).json({
+      success: true,
+      data: videos,
+      message: "Filtered videos fetched successfully",
+    });
+  };
+  
 
 module.exports = {getUploadURL,initiateMultipartUpload,getUploadParts,completeMultipartUpload,
-  abortMultipartUpload,saveVideo,getVideos , deleteVideo,updateVideoDetails,getSingleVideo
+  abortMultipartUpload,saveVideo,getVideos , deleteVideo,updateVideoDetails,getSingleVideo,filterVideos
 };

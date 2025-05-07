@@ -7,7 +7,8 @@ const {  getUploadURL,
     abortMultipartUpload,saveVideo,
     getSingleVideo,
     deleteVideo,
-    updateVideoDetails
+    updateVideoDetails,
+    filterVideos,
   } = require("../controllers/videoController");
 const { auth, isAdmin } = require("../middlewares/auth");
 
@@ -20,7 +21,7 @@ router.route("/").get( auth,  getVideos);
 router.route("/:id").get(auth,isAdmin,getSingleVideo);
 router.route("/:id").put( auth, isAdmin,updateVideoDetails);
 router.route("/:id").delete( auth, isAdmin, deleteVideo);
-
+router.route("/filter").get(filterVideos);
 
 router.route("/uploads/generate-urls").post(auth, isAdmin, getUploadParts);
 router.route("/uploads/initiate").post(auth, isAdmin, initiateMultipartUpload);
