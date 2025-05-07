@@ -64,14 +64,11 @@ const getDashboardData = catchAsyncErrors(async (req, res, next) => {
 // Get All Users with Pagination
 const getAllUsers = catchAsyncErrors(async (req, res, next) => {
   const excludeAdmin = { role: { $ne: "admin" } };
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+
 
   const users = await User.find(excludeAdmin)
     .select("-password -otp -otpExpires")
-    .skip(skip)
-    .limit(limit);
+    
 
   const totalUsers = await User.countDocuments(excludeAdmin);
 
@@ -79,8 +76,8 @@ const getAllUsers = catchAsyncErrors(async (req, res, next) => {
     success: true,
     count: users.length,
     total: totalUsers,
-    page,
-    pages: Math.ceil(totalUsers / limit),
+   
+  
     users
   });
 });
