@@ -24,7 +24,8 @@ const userSchema = new mongoose.Schema(
     preferredLanguage: {
       type: String,
       required: true,
-      default: "Spanish",
+      enum: ['English', 'Spanish', 'French', 'German', 'Italian','Arabic','Chinese','Japanese','korean'], 
+      default: 'English'
     },
     verified: {
       type: Boolean,
