@@ -4,13 +4,13 @@ const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncError");
 
 // HMAC secret (for frontend validation)
-const HMAC_SECRET = process.env.HMAC_SECRET || 'supersecretkey123';
+const HMAC_SECRET = process.env.HMAC_SECRET || 'bb06e81cd130138b36b8898bc5a';
 
 // AES secret (for decrypting plain code to admin)
-const ENC_SECRET = process.env.ENC_SECRET || 'encryptionsecret1234567890123456'; // must be 32 chars
+const ENC_SECRET = process.env.ENC_SECRET || 'encryptionsecret1234567890123456'; 
 const IV = Buffer.alloc(16, 0); // 16-byte IV for AES
 
-// HMAC hash generator (frontend-compatible)
+// HMAC hash generator 
 function hashCode(code) {
   return crypto
     .createHmac("sha256", HMAC_SECRET)
@@ -33,7 +33,7 @@ function decrypt(encrypted) {
   return decrypted;
 }
 
-// Helper: generate random 6-digit codes
+// Helper: generate random 4-digit codes
 const generateActivationCode = () => Math.floor(1000 + Math.random() * 9000).toString();
 
 // ✅ Admin: Generate activation codes (returns plain codes to admin)
@@ -96,7 +96,6 @@ exports.getActiveCodes = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// ✅ Admin: Revoke a code using the plain code
 exports.revokeCode = catchAsyncErrors(async (req, res, next) => {
   const { plainCode } = req.body;
   if (!plainCode) return next(new ErrorHandler("plainCode is required", 400));
@@ -114,7 +113,6 @@ exports.revokeCode = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// ✅ Public: Send all hashed codes (for offline validation on frontend)
 exports.getCodeHashes = catchAsyncErrors(async (req, res, next) => {
   const codes = await ActivationCode.find().select("hashedCode -_id");
 

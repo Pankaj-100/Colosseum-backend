@@ -15,6 +15,6 @@ router.get("/active", auth, isAdmin, getActiveCodes);
 router.delete("/revoke", auth, isAdmin, revokeCode);
 
 // Public route for mobile app
-router.get("/hashes", getCodeHashes);
+router.get("/hashes", auth,getCodeHashes);
 
 module.exports = router;
