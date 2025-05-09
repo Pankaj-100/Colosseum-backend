@@ -53,16 +53,10 @@ const videoSchema = new mongoose.Schema(
           
           },
           coordinates: {
-            type: [Number],  // [longitude, latitude]
+            lat: Number,
+            lng: Number // [longitude, latitude]
         
-            validate: {
-              validator: function(v) {
-                return v.length === 2 && 
-                       v[0] >= -180 && v[0] <= 180 && 
-                       v[1] >= -90 && v[1] <= 90;
-              },
-              message: props => `${props.value} is not a valid coordinate!`
-            }
+            
           },
           radius: {
             type: Number,  // in meters

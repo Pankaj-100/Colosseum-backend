@@ -4,7 +4,7 @@ const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncError");
 const nodemailer = require("../utils/nodeMailer");
 const { isValidPhoneNumber } = require("libphonenumber-js");
-const createNotification = require("../utils/createNotification");
+//const createNotification = require("../utils/createNotification");
 
 
 const jwt = require("jsonwebtoken");
@@ -47,11 +47,7 @@ const signup = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Failed to send verification OTP", 500));
     }
 // After successful login, password change, etc.
-await createNotification({
-  userId: user._id,
-  title: "succesful createed account",
-  description: "You have account into your Colosseum account.",
-});
+
     return res.status(200).json({
       success: true,
       message: "New OTP sent to your email for verification",
