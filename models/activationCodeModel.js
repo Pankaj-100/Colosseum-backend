@@ -10,6 +10,14 @@ const ActivationCodeSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  validFrom: {
+    type: Date,
+    required: true
+  },
+  validTill: {
+    type: Date,
+    required: true
+  },
   activations: [{
     deviceId: {
       type: String,
@@ -33,6 +41,7 @@ const ActivationCodeSchema = new mongoose.Schema({
     ref: 'User',
   }
 });
+
 
 const ActivationCode = mongoose.model('ActivationCode', ActivationCodeSchema);
 module.exports = ActivationCode;

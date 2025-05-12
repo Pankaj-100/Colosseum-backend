@@ -68,7 +68,7 @@ const signup = catchAsyncErrors(async (req, res, next) => {
   const otp = generateOTP();
   const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-  const user = await User.create({
+  const newuser = await User.create({
     name,
     email,
     phone,
@@ -88,11 +88,11 @@ const signup = catchAsyncErrors(async (req, res, next) => {
     success: true,
     message: "OTP sent to your email for verification",
     user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      preferredLanguage: user.preferredLanguage,
+      _id: newuser._id,
+      name: newuser.name,
+      email: newuser.email,
+      phone: newuser.phone,
+      preferredLanguage: newuser.preferredLanguage,
       otp,
     },
   });

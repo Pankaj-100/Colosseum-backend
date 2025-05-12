@@ -36,15 +36,24 @@ function decrypt(encrypted) {
 // Helper: generate random 4-digit codes
 const generateActivationCode = () => Math.floor(1000 + Math.random() * 9000).toString();
 
-// ✅ Admin: Generate activation codes (returns plain codes to admin)
+
 exports.generateCodes = catchAsyncErrors(async (req, res, next) => {
-  const { count } = req.body;
+  const { count, validityDays } = req.body;
 
   if (!count || count <= 0 || count > 100) {
     return next(new ErrorHandler("Count must be between 1 and 100", 400));
   }
 
+  if (!validityDays || validityDays <= 0) {
+    return next(new ErrorHandler("validityDays must be a positive number", 400));
+  }
+
+  const now = new Date();
+  const validFrom = now;
+  const validTill = new Date(now.getTime() + validityDays * 24 * 60 * 60 * 1000); // add X days
+
   const plainCodes = new Set();
+  const hashCodes = new Set();
   const hashedRecords = [];
 
   while (plainCodes.size < count) {
@@ -52,15 +61,17 @@ exports.generateCodes = catchAsyncErrors(async (req, res, next) => {
     const hash = hashCode(code);
     const encrypted = encrypt(code);
 
-    // Ensure uniqueness
     if ([...plainCodes].some(c => hashCode(c) === hash)) continue;
 
     plainCodes.add(code);
+    hashCodes.add(hash);
 
     hashedRecords.push({
       hashedCode: hash,
       encryptedCode: encrypted,
-      generatedBy: req.user._id
+      generatedBy: req.user._id,
+      validFrom,
+      validTill
     });
   }
 
@@ -74,10 +85,12 @@ exports.generateCodes = catchAsyncErrors(async (req, res, next) => {
     success: true,
     count: plainCodes.size,
     codes: Array.from(plainCodes),
+    hashcodes: Array.from(hashCodes),
+    validFrom,
+    validTill,
     message: "Activation codes generated"
   });
 });
-
 // ✅ Admin: View all codes with decrypted plainCode
 exports.getActiveCodes = catchAsyncErrors(async (req, res, next) => {
   const codes = await ActivationCode.find()
@@ -92,7 +105,8 @@ exports.getActiveCodes = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
     success: true,
     count: codesWithPlain.length,
-    codes: codesWithPlain
+    codes: codesWithPlain,
+   
   });
 });
 
@@ -114,11 +128,16 @@ exports.revokeCode = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getCodeHashes = catchAsyncErrors(async (req, res, next) => {
-  const codes = await ActivationCode.find().select("hashedCode -_id");
+  const codes = await ActivationCode.find().select("hashedCode validFrom validTill -_id");
 
   res.status(200).json({
     success: true,
     count: codes.length,
-    hashes: codes.map(c => c.hashedCode)
+    hashes: codes.map(c => ({
+      hashedCode: c.hashedCode,
+      validFrom: c.validFrom,
+      validTill: c.validTill
+    }))
   });
 });
+
