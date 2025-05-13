@@ -138,13 +138,13 @@ const verifyOTP = catchAsyncErrors(async (req, res, next) => {
 
 // Signin
 const signin = catchAsyncErrors(async (req, res, next) => {
-  const { phone, password } = req.body;
+  const { email, password } = req.body;
 
-  if ( !phone || !password) {
-    return next(new ErrorHandler("phone number and password are required", 400));
+  if ( !email || !password) {
+    return next(new ErrorHandler("email and password are required", 400));
   }
 
-  const user = await User.findOne({ phone }).select("+password");
+  const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
     return next(new ErrorHandler("Invalid credentials", 401));
