@@ -1,4 +1,5 @@
 const { User } = require("../models/userModel");
+const { Location } = require("../models/locationModel"); 
 const bcryptjs = require("bcryptjs");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncError");
@@ -185,7 +186,7 @@ const saveVideo = async (req, res, next) => {
       geolocationSettings
    
     } = req.body;
-    console.log(primaryLocation)
+   
   
     if (!title || !description || !thumbnailUrl || !videoUrl) {
      
@@ -196,7 +197,11 @@ const saveVideo = async (req, res, next) => {
     // Extract keys from url
     if (videoUrl) videoUrl = extractURLKey(videoUrl);
     if (thumbnailUrl) thumbnailUrl = extractURLKey(thumbnailUrl);
- 
+ const locationDoc = await Location.findOne({ name: primaryLocation });
+
+if (!locationDoc) {
+  return next(new ErrorHandler("Location not found", 404));
+}
 
     const videoData = {
       title,
@@ -204,7 +209,7 @@ const saveVideo = async (req, res, next) => {
       thumbnailUrl,
       videoUrl,
       duration,
-      primaryLocation,
+     primaryLocation: locationDoc._id, 
       language,
       geolocationSettings,
     };
@@ -335,37 +340,57 @@ const saveVideo = async (req, res, next) => {
     });
   });
   
-  const getFilteredVideos = async (req, res, next) => {
-    const { language, primaryLocation } = req.query;
-  
-    const filter = {};
-    if (language) filter.language = language;
-    if (primaryLocation) filter.primaryLocation = primaryLocation;
-  
-    const videos = await Video.aggregate([
-      {
-        $match: filter,
-      },
-      {
-        $addFields: {
-          thumbnailUrl: {
-            $concat: [awsUrl, "/", "$thumbnailUrl"],
-          },
-          videoUrl: {
-            $concat: [awsUrl, "/", "$videoUrl"],
-          },
+ const getFilteredVideos = async (req, res, next) => {
+  const { language, primaryLocation } = req.query;
+
+  const filter = {};
+  if (language) filter.language = language;
+
+  if (primaryLocation) {
+    try {
+      filter.primaryLocation = new mongoose.Types.ObjectId(primaryLocation);
+    } catch (error) {
+      return next(new ErrorHandler("Invalid location ID", 400));
+    }
+  }
+
+  const videos = await Video.aggregate([
+    {
+      $match: filter,
+    },
+    {
+      $addFields: {
+        thumbnailUrl: {
+          $concat: [awsUrl, "/", "$thumbnailUrl"],
+        },
+        videoUrl: {
+          $concat: [awsUrl, "/", "$videoUrl"],
         },
       },
-    ]);
-  
-    res.status(200).json({
-      success: true,
-      data: videos,
-      message: "Filtered videos fetched successfully",
-    });
-  };
-  
-  
+    },
+    {
+      $lookup: {
+        from: "locations",
+        localField: "primaryLocation",
+        foreignField: "_id",
+        as: "locationDetails",
+      },
+    },
+    {
+      $unwind: {
+        path: "$locationDetails",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: videos,
+    message: "Filtered videos fetched successfully",
+  });
+};
+
 
 module.exports = {getUploadURL,initiateMultipartUpload,getUploadParts,completeMultipartUpload,
   abortMultipartUpload,saveVideo,getVideos , deleteVideo,updateVideoDetails,getSingleVideo,getFilteredVideos

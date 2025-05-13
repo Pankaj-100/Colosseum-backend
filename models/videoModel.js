@@ -33,10 +33,11 @@ const videoSchema = new mongoose.Schema(
       enum: ['English', 'Spanish', 'French', 'German', 'Italian','Arabic','Chinese','Japanese','korean'], 
       default: 'English'
     },
-    primaryLocation: {
-      type: String,
-     
-    },
+ primaryLocation: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Location",
+  required: true
+},
   
     // Geolocation settings
     geolocationSettings: {
