@@ -62,25 +62,28 @@ const getDashboardData = catchAsyncErrors(async (req, res, next) => {
 });
 
 // Get All Users with Pagination
+// Get All Users with Pagination and Search
 const getAllUsers = catchAsyncErrors(async (req, res, next) => {
+  const { search } = req.query;
   const excludeAdmin = { role: { $ne: "admin" } };
 
+  let query = { ...excludeAdmin };
 
-  const users = await User.find(excludeAdmin)
-    .select("-password -otp -otpExpires")
-    
+  if (search) {
+    query.name = { $regex: search, $options: "i" }; // case-insensitive search
+  }
 
+  const users = await User.find(query).select("-password -otp -otpExpires");
   const totalUsers = await User.countDocuments(excludeAdmin);
 
   res.status(200).json({
     success: true,
     count: users.length,
     total: totalUsers,
-   
-  
     users
   });
 });
+
 
 // Get Single User
 const getUser = catchAsyncErrors(async (req, res, next) => {

@@ -31,7 +31,7 @@ const {
      if (!data.uploadURL) return next(new ErrorHandler("URL not found", 404));
 
 
-console.log("loading1")
+
     res.status(200).json({
       success: true,
       message: "get upload url successful",
@@ -186,7 +186,7 @@ const saveVideo = async (req, res, next) => {
       geolocationSettings
    
     } = req.body;
-   console.log("loading2")
+ 
   
     if (!title || !description || !thumbnailUrl || !videoUrl) {
      
@@ -202,7 +202,7 @@ const saveVideo = async (req, res, next) => {
 if (!locationDoc) {
   return next(new ErrorHandler("Location not found", 404));
 }
-console.log("loading3")
+
     const videoData = {
       title,
       description,
