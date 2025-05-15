@@ -45,7 +45,6 @@ const verifyEmail = async (email, name, otp) => {
 };
 
 const forgotpassword = async (email, name, otp) => {
-  console.log(" Attempting to send email to:", email); // Add this line
   const subject = "OTP Verification";
   const html = await reset_password(name, otp);
   return await sendMail(email, subject, html);

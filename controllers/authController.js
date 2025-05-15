@@ -4,8 +4,7 @@ const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncError");
 const nodemailer = require("../utils/nodeMailer");
 const { isValidPhoneNumber } = require("libphonenumber-js");
-//const createNotification = require("../utils/createNotification");
-
+const createNotification = require("../utils/createNotification");
 
 const jwt = require("jsonwebtoken");
 
@@ -46,8 +45,6 @@ const signup = catchAsyncErrors(async (req, res, next) => {
     if (!result.success) {
       return next(new ErrorHandler("Failed to send verification OTP", 500));
     }
-// After successful login, password change, etc.
-
     return res.status(200).json({
       success: true,
       message: "New OTP sent to your email for verification",
@@ -62,7 +59,6 @@ const signup = catchAsyncErrors(async (req, res, next) => {
     });
   }
 
-  // Create new user if none exists
   const hashedPassword = await bcryptjs.hash(password, 10);
 
   const otp = generateOTP();
@@ -97,16 +93,12 @@ const signup = catchAsyncErrors(async (req, res, next) => {
     },
   });
 });
-
-
 // Verify Email OTP
 const verifyOTP = catchAsyncErrors(async (req, res, next) => {
   const { email, otp } = req.body;
-
   if (!email || !otp) {
     return next(new ErrorHandler("Email and OTP are required", 400));
   }
-
   const user = await User.findOne({ email });
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
@@ -135,40 +127,32 @@ const verifyOTP = catchAsyncErrors(async (req, res, next) => {
    
   });
 });
-
 // Signin
 const signin = catchAsyncErrors(async (req, res, next) => {
   const { email, password } = req.body;
-
   if ( !email || !password) {
     return next(new ErrorHandler("email and password are required", 400));
   }
-
   const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
     return next(new ErrorHandler("Invalid credentials", 401));
   }
-
   if (!user.verified) {
     return next(new ErrorHandler("Please verify your email first", 401));
   }
-
   const isPasswordValid = await bcryptjs.compare(password, user.password);
   if (!isPasswordValid) {
     return next(new ErrorHandler("Invalid credentials", 401));
   }
-
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE ,
   });
-
   res.status(200).json({
     success: true,
     message: "Login successful",
     token,
     user: {
-     
       name: user.name,
       email: user.email, 
       phone: user.phone,
@@ -176,26 +160,21 @@ const signin = catchAsyncErrors(async (req, res, next) => {
     }
   });
 });
-
 // Resend OTP
 const resendOTP = catchAsyncErrors(async (req, res, next) => {
   const { email } = req.body;
-
   if (!email) {
     return next(new ErrorHandler("Email is required", 400));
   }
-
   const user = await User.findOne({ email });
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
-
   if (user.verified) {
     return next(new ErrorHandler("Email already verified", 400));
   }
-
   const otp = generateOTP();
-  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); 
 
   user.otp = otp;
   user.otpExpires = otpExpires;
@@ -212,23 +191,18 @@ const resendOTP = catchAsyncErrors(async (req, res, next) => {
     otp
   });
 });
-
 // Request OTP for password reset
 const forgotPasswordRequestOTP = catchAsyncErrors(async (req, res, next) => {
   const { email } = req.body;
 
   if (!email) return next(new ErrorHandler("Email is required", 400));
-
   const user = await User.findOne({ email });
   if (!user) return next(new ErrorHandler("User not found", 404));
-
-  // Generate and save OTP
   const otp = generateOTP();
   user.resetPasswordOTP = otp;
-  user.resetPasswordExpires = Date.now() + 10*60*1000; // 10 minutes
+  user.resetPasswordExpires = Date.now() + 10*60*1000; 
   await user.save();
 
-  // Send OTP via email
   const result = await nodemailer.forgotpassword(email, user.name, otp);
   if (!result.success) return next(new ErrorHandler("Failed to send OTP", 500));
 
@@ -239,7 +213,6 @@ const forgotPasswordRequestOTP = catchAsyncErrors(async (req, res, next) => {
     otp
   });
 });
-
 //  Verify OTP
 const forgotPasswordVerifyOTP = catchAsyncErrors(async (req, res, next) => {
   const { email, otp } = req.body;
@@ -264,20 +237,14 @@ const forgotPasswordVerifyOTP = catchAsyncErrors(async (req, res, next) => {
     email
   });
 });
-
 //  Reset Password
 const forgotPasswordReset = catchAsyncErrors(async (req, res, next) => {
   const { email, newPassword } = req.body;
-
   if (!email ||  !newPassword)
     return next(new ErrorHandler("All fields required", 400));
-
   const user = await User.findOne({
     email
   });
-
-
-
   // Update password 
   user.password = await bcryptjs.hash(newPassword, 10);
 

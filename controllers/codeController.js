@@ -3,12 +3,15 @@ const ActivationCode = require("../models/activationCodeModel");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncError");
 
-// HMAC secret (for frontend validation)
-const HMAC_SECRET = process.env.HMAC_SECRET || 'bb06e81cd130138b36b8898bc5a';
+
 
 // AES secret (for decrypting plain code to admin)
-const ENC_SECRET = process.env.ENC_SECRET || 'encryptionsecret1234567890123456'; 
+const ENC_SECRET = process.env.CODE_ENCRYPTION_KEY ;
 const IV = Buffer.alloc(16, 0); // 16-byte IV for AES
+// HMAC secret (for frontend validation)
+const HMAC_SECRET = process.env.HMAC_SECRET;
+
+
 
 // HMAC hash generator 
 function hashCode(code) {

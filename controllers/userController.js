@@ -11,10 +11,8 @@ const {
 
 // user profile
 const profile = catchAsyncErrors(async (req, res, next) => {
-
 const userid= req.userId;
     const user = await User.findById(userid).select("-password -otp -otpExpires -role -verified ");
-  
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
     }
@@ -33,9 +31,6 @@ const uploadProfileImages = catchAsyncErrors(async (req, res, next) => {
    const id=    req.userId;
 console.log(req.file)
     const { imageUrl } = await uploadProfileImage(req.file, id);
-    
-    // Update user in database
-
     const user = await User.findById(id);
    user.profileImage = imageUrl;
 
@@ -47,12 +42,10 @@ console.log(req.file)
     });
   });
   
-  const updateProfile = catchAsyncErrors(async (req, res, next) => {
+const updateProfile = catchAsyncErrors(async (req, res, next) => {
     const userId = req.userId;
     const updates = req.body;
-    
-   
-    // Handle file upload if exists
+  
     if (req.file) {
       try {
         const { imageUrl } = await uploadProfileImage(req.file, userId);
@@ -61,8 +54,6 @@ console.log(req.file)
         return next(new ErrorHandler('Failed to upload profile image', 500));
       }
     }
-  
-    // Prevent updating restricted fields
     const restrictedFields = ['password', 'role', 'verified', 'otp', 'otpExpires'];
     restrictedFields.forEach(field => delete updates[field]);
   
@@ -97,14 +88,12 @@ console.log(req.file)
   });
 
   const getVideos = catchAsyncErrors(async (req, res, next) => {
- 
     const userId = req.userId;
     const user = await User.findById(userId).select('preferredLanguage');
     
     if (!user) {
       return next(new ErrorHandler('User not found', 404));
     }
-  
     const videosQuery = Video.aggregate([
   
       {
@@ -130,15 +119,12 @@ console.log(req.file)
     ]);
   
     const videos = await videosQuery;
-  
     res.status(200).json({  
       success: true,
       data: { videos },
       message: `Videos in ${user.preferredLanguage} fetched successfully`,
     });
   });
-
-  
 
   module.exports = {
     profile,

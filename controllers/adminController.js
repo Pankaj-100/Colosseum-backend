@@ -46,7 +46,6 @@ const login = catchAsyncErrors(async (req, res, next) => {
     }
   });
 });
-
 // Get Dashboard 
 const getDashboardData = catchAsyncErrors(async (req, res, next) => {
   const excludeAdmin = { role: { $ne: "admin" } };
@@ -60,8 +59,6 @@ const getDashboardData = catchAsyncErrors(async (req, res, next) => {
     },
   });
 });
-
-// Get All Users with Pagination
 // Get All Users with Pagination and Search
 const getAllUsers = catchAsyncErrors(async (req, res, next) => {
   const { search } = req.query;
@@ -70,7 +67,7 @@ const getAllUsers = catchAsyncErrors(async (req, res, next) => {
   let query = { ...excludeAdmin };
 
   if (search) {
-    query.name = { $regex: search, $options: "i" }; // case-insensitive search
+    query.name = { $regex: search, $options: "i" }; 
   }
 
   const users = await User.find(query).select("-password -otp -otpExpires");
@@ -83,16 +80,12 @@ const getAllUsers = catchAsyncErrors(async (req, res, next) => {
     users
   });
 });
-
-
 // Get Single User
 const getUser = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findById(req.params.id).select("-password ");
-
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
-
   res.status(200).json({
     success: true,
     user
@@ -105,8 +98,6 @@ const updateUser = catchAsyncErrors(async (req, res, next) => {
 
   const user = await User.findById(id);
   if (!user) return next(new ErrorHandler("User not found", 404));
-
-  // Email check (excludes current user)
   if (email && email !== user.email) {
     const emailExists = await User.findOne({ 
       email, 
@@ -157,20 +148,15 @@ const deleteUser = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
-
   if (user.role === "admin") {
     return next(new ErrorHandler("Cannot delete admin user", 403));
   }
-
   await User.findByIdAndDelete(id);
-
   res.status(200).json({
     success: true,
     message: "User deleted successfully"
   });
 });
-
-
 module.exports = {
   login,
   getDashboardData,

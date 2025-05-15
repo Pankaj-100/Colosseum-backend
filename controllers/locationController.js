@@ -28,7 +28,6 @@ exports.createLocation = catchAsyncErrors(async (req, res, next) => {
 // Get all locations
 exports.getAllLocations = catchAsyncErrors(async (req, res, next) => {
   const locations = await Location.find().sort({ name: 1 });
-
   res.status(200).json({
     success: true,
     count: locations.length,
