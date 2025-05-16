@@ -99,7 +99,9 @@ const verifyOTP = catchAsyncErrors(async (req, res, next) => {
   if (!email || !otp) {
     return next(new ErrorHandler("Email and OTP are required", 400));
   }
-  const user = await User.findOne({ email });
+
+  const user = await User.findOne({ email }).select("+password"); 
+
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
@@ -121,12 +123,25 @@ const verifyOTP = catchAsyncErrors(async (req, res, next) => {
   user.otpExpires = undefined;
   await user.save();
 
+  // Generate JWT
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE,
+  });
+
+  // Send token and user info
   res.status(200).json({
     success: true,
     message: "Email verified successfully",
-   
+    token,
+    user: {
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      preferredLanguage: user.preferredLanguage
+    }
   });
 });
+
 // Signin
 const signin = catchAsyncErrors(async (req, res, next) => {
   const { email, password } = req.body;
