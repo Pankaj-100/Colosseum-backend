@@ -47,7 +47,8 @@ const saveVideo = async (req, res, next) => {
       videoUrl,
       language,
       duration,
-      geolocationSettings
+      geolocationSettings,
+      
     } = req.body;
     if (!title || !description || !thumbnailUrl || !videoUrl) {
         return next(new ErrorHandler("All fields are required", 400));

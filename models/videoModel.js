@@ -53,12 +53,10 @@ const videoSchema = new mongoose.Schema(
             enum: ['Point'],
           
           },
-          coordinates: {
-            lat: Number,
-            lng: Number // [longitude, latitude]
-        
-            
-          },
+           coordinates: {
+      type: [Number], // [longitude, latitude]
+      required: true
+    },
           radius: {
             type: Number,  // in meters
          
