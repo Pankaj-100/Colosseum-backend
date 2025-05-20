@@ -270,6 +270,34 @@ const forgotPasswordReset = catchAsyncErrors(async (req, res, next) => {
     message: "Password reset successfully"
   });
 });
+// Change Password
+const changePassword = catchAsyncErrors(async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId =  req.userId ; // Assuming auth middleware sets req.user
+
+  if (!currentPassword || !newPassword) {
+    return next(new ErrorHandler("Both current and new passwords are required", 400));
+  }
+
+  const user = await User.findById(userId).select("+password");
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  const isMatch = await bcryptjs.compare(currentPassword, user.password);
+  if (!isMatch) {
+    return next(new ErrorHandler("Current password is incorrect", 401));
+  }
+
+  user.password = await bcryptjs.hash(newPassword, 10);
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Password changed successfully",
+  });
+});
+
 
 module.exports = {
   signup,
@@ -278,5 +306,6 @@ module.exports = {
   resendOTP,
   forgotPasswordRequestOTP,
   forgotPasswordVerifyOTP,
-  forgotPasswordReset
+  forgotPasswordReset,
+  changePassword
 };
