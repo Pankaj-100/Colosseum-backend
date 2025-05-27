@@ -157,12 +157,12 @@ if (!locationDoc) {
     });
   });
   
-  const updateVideoDetails = catchAsyncErrors(async (req, res, next) => {
+const updateVideoDetails = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params;
     const updates = req.body;
   
     // Allowed fields for update
-    const allowedUpdates = ['title', 'description', 'thumbnailUrl', 'videoUrl', 
+    const allowedUpdates = ['title', 'description', 'thumbnailUrl',  
                            'language', 'geolocationSettings'];
     
     // Filter valid updates
@@ -172,6 +172,19 @@ if (!locationDoc) {
     validUpdates.forEach(key => {
       if (key === 'videoUrl' || key === 'thumbnailUrl') {
         updateData[key] = extractURLKey(updates[key]);
+      } else if (key === 'geolocationSettings') {
+        // Validate geolocation settings
+        if (updates[key] && updates[key].locations) {
+          updateData[key] = {
+            isGeolocationEnabled: updates[key].isGeolocationEnabled || false,
+            locations: updates[key].locations.map(loc => ({
+              type: 'Point',
+              coordinates: Array.isArray(loc.coordinates) ? loc.coordinates : [0, 0],
+              radius: Number(loc.radius) || 100,
+              locationName: loc.locationName || ''
+            }))
+          };
+        }
       } else {
         updateData[key] = updates[key];
       }
@@ -191,7 +204,7 @@ if (!locationDoc) {
       message: "Video updated successfully",
       data: video,
     });
-  });
+});
   
  const getFilteredVideos = async (req, res, next) => {
   const { language, primaryLocation } = req.query;

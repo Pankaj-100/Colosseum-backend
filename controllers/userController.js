@@ -57,13 +57,13 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
     const restrictedFields = ['password', 'role', 'verified', 'otp', 'otpExpires'];
     restrictedFields.forEach(field => delete updates[field]);
   
-    // Validate phone format if being updated
-    if (updates.phone) {
-      const phoneRegex = /^\+[1-9]\d{1,14}$/;
-      if (!phoneRegex.test(updates.phone)) {
-        return next(new ErrorHandler("Phone number must be in E.164 format", 400));
-      }
-    }
+    // // Validate phone format if being updated
+    // if (updates.phone) {
+    //   const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    //   if (!phoneRegex.test(updates.phone)) {
+    //     return next(new ErrorHandler("Phone number must be in E.164 format", 400));
+    //   }
+    // }
   
     // // If email is changed, mark as unverified
     // if (updates.email) {

@@ -7,7 +7,8 @@ const authRoute = require("./routes/authRoute");
 const adminRoute = require("./routes/adminRoute");
 const videoRoute = require("./routes/videoRoute");
 const codeRoute=require("./routes/codeRoute");
-const userRoutes=require("./routes/userRoutes")
+const userRoutes=require("./routes/userRoutes");
+const termRoute=require("./routes/termRoute")
 const locationRoutes= require("./routes/locationRoutes")
 dotenv.config({ path: "./config/config.env" });
 
@@ -28,6 +29,8 @@ app.use("/api/admin", adminRoute);
 app.use("/api/video", videoRoute);
 app.use("/api/code", codeRoute);
 app.use("/api/location", locationRoutes);
+app.use("/api/term", termRoute);
+
 
 app.all('*', async (req, res) => {
   res.status(404).json({error:{message:"Not Found. Kindly Check the API path as well as request type"}})
