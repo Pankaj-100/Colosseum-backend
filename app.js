@@ -29,7 +29,7 @@ app.use("/api/admin", adminRoute);
 app.use("/api/video", videoRoute);
 app.use("/api/code", codeRoute);
 app.use("/api/location", locationRoutes);
-app.use("/api/term", termRoute);
+app.use("/api/terms", termRoute);
 
 
 app.all('*', async (req, res) => {

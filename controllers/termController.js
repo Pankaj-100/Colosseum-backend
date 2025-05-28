@@ -1,18 +1,47 @@
 
 const { Term } = require("../models/termModel");
 
-// Create Term
- const createTerm = async (req, res) => {
+const createTerm = async (req, res) => {
   const { language, content } = req.body;
+  
   try {
-    const newTerm = new Term({ language, content });
+    // Check if term with this language already exists
+    const existingTerm = await Term.findOne({ language });
+    if (existingTerm) {
+      return res.status(400).json({
+        success: false,
+        message: `Terms & Conditions for ${language} already exist`
+      });
+    }
+
+    const newTerm = new Term({ 
+      language: language.trim(), 
+      content 
+    });
+    
     await newTerm.save();
-    res.status(201).json(newTerm);
+    
+    res.status(201).json({
+      success: true,
+      data: newTerm
+    });
+    
   } catch (err) {
-    res.status(500).json({ message: 'Failed to create term.', error: err.message });
+    // Handle duplicate key error (in case the unique check somehow fails)
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: `Terms & Conditions for ${language} already exist`
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to create term.', 
+      error: err.message 
+    });
   }
 };
-
 // Get All Terms
  const getTerms = async (req, res) => {
   try {
@@ -23,14 +52,24 @@ const { Term } = require("../models/termModel");
   }
 };
 
-// Get Term by Language
- const getTermByLanguage = async (req, res) => {
+// In your backend controller
+const getTermByLanguage = async (req, res) => {
   try {
     const term = await Term.findOne({ language: req.params.language });
-    if (!term) return res.status(404).json({ message: 'Term not found.' });
-    res.status(200).json(term);
+    if (!term) return res.status(404).json({ 
+      success: false,
+      message: 'Term not found.' 
+    });
+    res.status(200).json({
+      success: true,
+      data: term
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Error retrieving term.', error: err.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error retrieving term.', 
+      error: err.message 
+    });
   }
 };
 

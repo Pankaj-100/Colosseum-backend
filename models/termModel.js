@@ -4,7 +4,9 @@ const termSchema = new mongoose.Schema(
   {
     language: {
       type: String,
-      required: true, // e.g., "en", "fr", "de"
+      required: true,
+    
+       
     },
     content: {
       type: String,
