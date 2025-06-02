@@ -1,9 +1,9 @@
-import Notification from "../models/notificationModel";
+const{ Notification} = require( "../models/notificationModel");
 
 // Fetch all notifications for the logged-in user
-export const getNotifications = async (req, res) => {
+const getNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ user: req.user._id })
+    const notifications = await Notification.find({ user:  req.userId })
       .sort({ createdAt: -1 });
 
     res.json(notifications);
@@ -13,7 +13,7 @@ export const getNotifications = async (req, res) => {
 };
 
 // Mark a specific notification as seen
-export const markAsSeen = async (req, res) => {
+const markAsSeen = async (req, res) => {
   try {
     const notification = await Notification.findById(req.params.id);
 
@@ -21,7 +21,7 @@ export const markAsSeen = async (req, res) => {
       return res.status(404).json({ message: "Notification not found." });
     }
 
-    if (notification.user.toString() !== req.user._id.toString()) {
+    if (notification.user.toString() !==  req.userId.toString()) {
       return res.status(403).json({ message: "Not authorized." });
     }
 
@@ -33,3 +33,7 @@ export const markAsSeen = async (req, res) => {
     res.status(500).json({ message: "Failed to update notification." });
   }
 };
+
+module.exports = {getNotifications,markAsSeen
+
+  };

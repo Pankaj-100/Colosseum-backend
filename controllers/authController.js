@@ -122,6 +122,12 @@ const verifyOTP = catchAsyncErrors(async (req, res, next) => {
   user.otp = undefined;
   user.otpExpires = undefined;
   await user.save();
+  // 🔔 Create welcome notification
+await createNotification({
+  userId: user._id,
+  title: "Welcome to Colosseum Video App AI",
+  description: `Hi ${user.name}, thank you for joining us! Your account has been successfully verified.`,
+});
 
   // Generate JWT
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -291,6 +297,11 @@ const changePassword = catchAsyncErrors(async (req, res, next) => {
 
   user.password = await bcryptjs.hash(newPassword, 10);
   await user.save();
+  await createNotification({
+  userId: user._id,
+  title: "Password Changed",
+  description: "Your account password has been successfully changed.",
+});
 
   res.status(200).json({
     success: true,

@@ -1,6 +1,5 @@
-const Notification = require("../models/notificationModel");
+const { Notification } = require("../models/notificationModel");
 
-// System-generated notification
 const createNotification = async ({ userId, title, description }) => {
   try {
     await Notification.create({
@@ -8,9 +7,9 @@ const createNotification = async ({ userId, title, description }) => {
       title,
       description,
     });
-  } catch (err) {
-    console.error("Failed to create notification:", err);
+  } catch (error) {
+    console.error("Notification creation failed:", error.message);
   }
 };
 
-module.exports={ createNotification}
+module.exports = createNotification;

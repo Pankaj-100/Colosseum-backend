@@ -10,6 +10,7 @@ const codeRoute=require("./routes/codeRoute");
 const userRoutes=require("./routes/userRoutes");
 const termRoute=require("./routes/termRoute")
 const locationRoutes= require("./routes/locationRoutes")
+const notificationRoute= require("./routes/notificationRoutes")
 dotenv.config({ path: "./config/config.env" });
 
 app.use(express.json());
@@ -30,6 +31,7 @@ app.use("/api/video", videoRoute);
 app.use("/api/code", codeRoute);
 app.use("/api/location", locationRoutes);
 app.use("/api/terms", termRoute);
+app.use("/api/notification", notificationRoute);
 
 
 app.all('*', async (req, res) => {
