@@ -12,6 +12,11 @@ const locationSchema = new mongoose.Schema(
       type: String,
       required: [true, "Thumbnail URL is required"],
       trim: true
+    },
+    size: {
+      type: String,
+      required: [true, "Size is required"],
+      default: '150MB'
     }
   },
   {
