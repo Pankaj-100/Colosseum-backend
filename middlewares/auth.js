@@ -6,23 +6,25 @@ dotenv.config({ path: "../config/config.env" });
 
 exports.auth = async (req, res, next) => {
   try {
-    if (!req.headers.authorization) {
-      return res.status(401).send({
-        error: {
-          message: `Unauthorized.Please Send token in request header`,
-        },
-      });
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: { message: "Unauthorized. Please send token" } });
     }
-    const decoded = jwt.verify(
-      req.headers.authorization,
-      process.env.JWT_SECRET
-    );
-    req.userId = decoded.id;
+
+    const decoded = jwt.verify(authHeader, process.env.JWT_SECRET);
+
+    const user = await User.findById(decoded.id).select("+currentToken");
+    if (!user || user.currentToken !== authHeader) {
+      return res.status(401).json({ error: { message: "Session expired or logged in from another device" } });
+    }
+
+    req.userId = user._id;
     next();
   } catch (error) {
-    return res.status(401).send({ error: { message: `Unauthorized` } });
+    return res.status(401).json({ error: { message: "Unauthorized" } });
   }
 };
+
 exports.isAdmin = async (req, res, next) => {
   try {
     const userId = req.userId;

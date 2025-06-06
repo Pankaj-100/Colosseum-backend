@@ -166,20 +166,26 @@ const signin = catchAsyncErrors(async (req, res, next) => {
   if (!isPasswordValid) {
     return next(new ErrorHandler("Invalid credentials", 401));
   }
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE ,
-  });
-  res.status(200).json({
-    success: true,
-    message: "Login successful",
-    token,
-    user: {
-      name: user.name,
-      email: user.email, 
-      phone: user.phone,
-      preferredLanguage: user.preferredLanguage
-    }
-  });
+const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+  expiresIn: process.env.JWT_EXPIRE,
+});
+
+// Save token to DB
+user.currentToken = token;
+await user.save();
+
+res.status(200).json({
+  success: true,
+  message: "Login successful",
+  token,
+  user: {
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    preferredLanguage: user.preferredLanguage,
+  },
+});
+
 });
 // Resend OTP
 const resendOTP = catchAsyncErrors(async (req, res, next) => {
