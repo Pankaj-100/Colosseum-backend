@@ -31,6 +31,9 @@ const login = catchAsyncErrors(async (req, res, next) => {
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE || "7d",
   });
+  // Save token to DB
+user.currentToken = token;
+await user.save();
 
   res.status(200).json({
     success: true,

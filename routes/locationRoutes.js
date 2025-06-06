@@ -12,7 +12,7 @@ const { auth, isAdmin } = require("../middlewares/auth");
 
 router.post("/", auth, isAdmin, upload.single("thumbnail"), createLocation);
 router.put("/:id", auth, isAdmin, upload.single("thumbnail"), updateLocation);
-router.get("/",  getAllLocations);
+router.get("/", auth, getAllLocations);
 router.delete("/:id", auth, isAdmin, deleteLocation);
 
 module.exports = router;

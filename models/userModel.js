@@ -55,7 +55,7 @@ const userSchema = new mongoose.Schema(
     currentToken: {
   type: String,
   default: null,
-  select: false
+
 },
 
 

@@ -285,7 +285,7 @@ const forgotPasswordReset = catchAsyncErrors(async (req, res, next) => {
 // Change Password
 const changePassword = catchAsyncErrors(async (req, res, next) => {
   const { currentPassword, newPassword } = req.body;
-  const userId =  req.userId ; // Assuming auth middleware sets req.user
+  const userId =  req.userId ; 
 
   if (!currentPassword || !newPassword) {
     return next(new ErrorHandler("Both current and new passwords are required", 400));

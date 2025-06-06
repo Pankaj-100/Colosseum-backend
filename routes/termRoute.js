@@ -9,9 +9,9 @@ const { auth, isAdmin } = require("../middlewares/auth");
 const router = express.Router();
 
 // Admin routes
-router.post('/', createTerm);
-router.put('/:id', updateTerm);
-router.delete('/:id', deleteTerm);
+router.post('/', auth,isAdmin,createTerm);
+router.put('/:id',auth,isAdmin, updateTerm);
+router.delete('/:id',auth,isAdmin, deleteTerm);
 
 // Public routes
 router.get('/', getTerms);
