@@ -17,7 +17,7 @@ const signup = catchAsyncErrors(async (req, res, next) => {
   if (!name || !email || !phone || !password) {
     return next(new ErrorHandler("All fields are required", 400));
   }
-
+const currentToken="";
   // if (!isValidPhoneNumber(phone)) {
   //   return res.status(400).json({ message: "Invalid phone number format" });
   // }
@@ -55,6 +55,7 @@ const signup = catchAsyncErrors(async (req, res, next) => {
         phone: existingUser.phone,
         preferredLanguage: existingUser.preferredLanguage,
         otp,
+        currentToken,
       },
     });
   }
@@ -63,28 +64,30 @@ const signup = catchAsyncErrors(async (req, res, next) => {
 
   const otp = generateOTP();
   const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-    const token = jwt.sign({ id: newuser._id }, process.env.JWT_SECRET, {
-  expiresIn: process.env.JWT_EXPIRE,
-});
-
 
   const newuser = await User.create({
     name,
     email,
     phone,
-    currentToken : token,
     password: hashedPassword,
     preferredLanguage,
     verified: false,
     otp,
     otpExpires,
+    currentToken:""
   });
 
   const result = await nodemailer.verifyEmail(email, name, otp);
   if (!result.success) {
     return next(new ErrorHandler("Failed to send verification OTP", 500));
   }
+    const token = jwt.sign({ id: newuser._id }, process.env.JWT_SECRET, {
+  expiresIn: process.env.JWT_EXPIRE,
+});
 
+// Save token to DB
+newuser.currentToken = token;
+await newuser.save();
 
 
   res.status(201).json({
@@ -97,6 +100,7 @@ const signup = catchAsyncErrors(async (req, res, next) => {
       phone: newuser.phone,
       preferredLanguage: newuser.preferredLanguage,
       otp,
+      currentToken
     },
   });
 });
@@ -140,6 +144,8 @@ await createNotification({
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE,
   });
+  user.currentToken = token;
+await user.save();
 
   // Send token and user info
   res.status(200).json({
@@ -150,7 +156,8 @@ await createNotification({
       name: user.name,
       email: user.email,
       phone: user.phone,
-      preferredLanguage: user.preferredLanguage
+      preferredLanguage: user.preferredLanguage,
+      currentToken:user.currentToken
     }
   });
 });
