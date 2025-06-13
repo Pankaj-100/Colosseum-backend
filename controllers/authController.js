@@ -79,7 +79,7 @@ const signup = catchAsyncErrors(async (req, res, next) => {
   if (!result.success) {
     return next(new ErrorHandler("Failed to send verification OTP", 500));
   }
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: newuser._id }, process.env.JWT_SECRET, {
   expiresIn: process.env.JWT_EXPIRE,
 });
 
