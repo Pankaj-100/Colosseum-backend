@@ -63,11 +63,16 @@ const signup = catchAsyncErrors(async (req, res, next) => {
 
   const otp = generateOTP();
   const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    const token = jwt.sign({ id: newuser._id }, process.env.JWT_SECRET, {
+  expiresIn: process.env.JWT_EXPIRE,
+});
+
 
   const newuser = await User.create({
     name,
     email,
     phone,
+    currentToken : token,
     password: hashedPassword,
     preferredLanguage,
     verified: false,
@@ -79,13 +84,7 @@ const signup = catchAsyncErrors(async (req, res, next) => {
   if (!result.success) {
     return next(new ErrorHandler("Failed to send verification OTP", 500));
   }
-    const token = jwt.sign({ id: newuser._id }, process.env.JWT_SECRET, {
-  expiresIn: process.env.JWT_EXPIRE,
-});
 
-// Save token to DB
-newuser.currentToken = token;
-await newuser.save();
 
 
   res.status(201).json({
