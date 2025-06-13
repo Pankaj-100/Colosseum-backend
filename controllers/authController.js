@@ -79,6 +79,14 @@ const signup = catchAsyncErrors(async (req, res, next) => {
   if (!result.success) {
     return next(new ErrorHandler("Failed to send verification OTP", 500));
   }
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+  expiresIn: process.env.JWT_EXPIRE,
+});
+
+// Save token to DB
+newuser.currentToken = token;
+await newuser.save();
+
 
   res.status(201).json({
     success: true,
