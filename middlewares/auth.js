@@ -14,11 +14,16 @@ exports.auth = async (req, res, next) => {
     const decoded = jwt.verify(authHeader, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.id).select("+currentToken");
+      if (!user ) {
+      return res.status(401).json({ error: { message: "user not found" } });
+    }
+
     if (!user || user.currentToken !== authHeader) {
       return res.status(401).json({ error: { message: "Session expired or logged in from another device" } });
     }
 
     req.userId = user._id;
+  
     next();
   } catch (error) {
     return res.status(401).json({ error: { message: "Unauthorized" } });

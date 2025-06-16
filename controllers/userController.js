@@ -126,9 +126,26 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
     });
   });
 
+  const deleteaccount = catchAsyncErrors(async (req, res, next) => {
+    const  id  = req.userId;
+  
+    const user = await User.findById(id);
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+ 
+      console.log(id)
+    await User.findByIdAndDelete(id);
+    res.status(200).json({
+      success: true,
+      message: "Account deleted successfully"
+    });
+  });
+
   module.exports = {
     profile,
     uploadProfileImages,
     getVideos,
-    updateProfile
+    updateProfile,
+    deleteaccount
   };
