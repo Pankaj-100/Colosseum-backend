@@ -204,10 +204,10 @@ const getFilteredVideos = async (req, res, next) => {
     }
   }
 
-  const videos = await Video.find(filter).populate('primaryLocation');
+  const video = await Video.find(filter).populate('primaryLocation');
   
   // Add full URLs to each video
-  const videosWithUrls = videos.map(video => ({
+  const videos = video.map(video => ({
     ...video.toObject(),
     videoUrl: addUrl(req, video.videoUrl),
     thumbnailUrl: addUrl(req, video.thumbnailUrl)
@@ -215,7 +215,7 @@ const getFilteredVideos = async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    data: videosWithUrls,
+    data: videos,
     message: "Filtered videos fetched successfully"
   });
 };
