@@ -53,9 +53,9 @@ const addUrl = (req, filePath) => {
 
 // Get all videos
 const getVideos = async (req, res, next) => {
-  const video = await Video.find().populate('primaryLocation');
+  const videos = await Video.find().populate('primaryLocation');
   // Add full URLs to each video
-  const videos = video.map(video => ({
+  const videosWithUrls = videos.map(video => ({
     ...video.toObject(),
     videoUrl: addUrl(req, video.videoUrl),
     thumbnailUrl: addUrl(req, video.thumbnailUrl)
@@ -64,7 +64,7 @@ const getVideos = async (req, res, next) => {
   res.status(200).json({
     success: true,
     count: videosWithUrls.length,
-    data: { videos: videos }
+    data: { videos: videosWithUrls }
   });
 };
 
@@ -78,7 +78,7 @@ const getSingleVideo = async (req, res, next) => {
   }
 
   // Add full URLs to the video
-  const videos = {
+  const videoWithUrls = {
     ...video.toObject(),
     videoUrl: addUrl(req, video.videoUrl),
     thumbnailUrl: addUrl(req, video.thumbnailUrl)
@@ -86,7 +86,7 @@ const getSingleVideo = async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    data: videos
+    data: videoWithUrls
   });
 };
 
@@ -189,7 +189,7 @@ const updateVideoDetails = async (req, res, next) => {
     data: video,
   });
 };
-const getFilteredVideos = async (req, res, next) => {
+const getFilteredVideos= async (req, res, next) => {
   console.log("1234")
   const { language, primaryLocation } = req.query;
   const filter = {};
@@ -204,10 +204,10 @@ const getFilteredVideos = async (req, res, next) => {
     }
   }
 
-  const video = await Video.find(filter).populate('primaryLocation');
+  const videos = await Video.find(filter).populate('primaryLocation');
   
   // Add full URLs to each video
-  const videos = video.map(video => ({
+  const videosWithUrls = videos.map(video => ({
     ...video.toObject(),
     videoUrl: addUrl(req, video.videoUrl),
     thumbnailUrl: addUrl(req, video.thumbnailUrl)
@@ -215,7 +215,7 @@ const getFilteredVideos = async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    data: videos,
+    data: videosWithUrls,
     message: "Filtered videos fetched successfully"
   });
 };
@@ -226,5 +226,5 @@ module.exports = {
   deleteVideo,
   updateVideoDetails,
   getSingleVideo,
- getFilteredVideos
+  getFilteredVideos
 };
