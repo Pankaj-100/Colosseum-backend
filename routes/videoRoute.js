@@ -1,28 +1,28 @@
+// routes/videoRoutes.js
 const express = require("express");
-const {  getUploadURL,
-    getVideos,
-  saveVideo,
-    getSingleVideo,
-    deleteVideo,
-    updateVideoDetails,
-    getFilteredVideos,
-  } = require("../controllers/videoController");
-const { auth, isAdmin } = require("../middlewares/auth");
-
 const router = express.Router();
+const { 
+  saveVideo,
+  getVideos,
+  getSingleVideo,
+  deleteVideo,
+  updateVideoDetails,
+  getFilteredVideos
+} = require("../controllers/videoController");
+const { auth, isAdmin } = require("../middlewares/auth");
+const { 
+  imageUpload, 
+  videoUpload ,
+  uploadMedia
+} = require("../utils/multer");
 
-router.route("/get-upload-url").post(auth, isAdmin,getUploadURL);
-router.route("/save").post(auth, isAdmin,  saveVideo);
-router.route("/").get( auth,  getVideos);
-router.route("/filter").get(auth,getFilteredVideos);
- 
-router.route("/:id").get(auth,isAdmin,getSingleVideo);
-router.route("/:id").put( auth, isAdmin,updateVideoDetails);
-router.route("/:id").delete( auth, isAdmin, deleteVideo);
-
-
-
-
+// Upload video (single upload)
+router.post( "/",  auth,  isAdmin, uploadMedia, saveVideo);
+router.get("/", auth, getVideos);
+router.get("/filter",auth, getFilteredVideos);
+router.get("/:id", auth, isAdmin, getSingleVideo);
+router.delete("/:id", auth, isAdmin, deleteVideo);
+router.put( "/:id", auth, isAdmin, uploadMedia,updateVideoDetails);
 
 
 module.exports = router;

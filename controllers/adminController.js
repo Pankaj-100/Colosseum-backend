@@ -62,6 +62,11 @@ const getDashboardData = catchAsyncErrors(async (req, res, next) => {
     },
   });
 });
+const addUrl = (req, filePath) => {
+  if (!filePath) return null;
+  return `${process.env.URL}${filePath}`;
+};
+
 // Get All Users with Pagination and Search
 const getAllUsers = catchAsyncErrors(async (req, res, next) => {
   const { search } = req.query;
@@ -74,24 +79,39 @@ const getAllUsers = catchAsyncErrors(async (req, res, next) => {
   }
 
   const users = await User.find(query).select("-password -otp -otpExpires");
+  
+  // Add full URLs to each user's profile image
+  const usersWithUrls = users.map(user => ({
+    ...user.toObject(),
+    profileImage: user.profileImage ? addUrl(req, user.profileImage) : null
+  }));
+
   const totalUsers = await User.countDocuments(excludeAdmin);
 
   res.status(200).json({
     success: true,
-    count: users.length,
+    count: usersWithUrls.length,
     total: totalUsers,
-    users
+    users: usersWithUrls
   });
 });
+
 // Get Single User
 const getUser = catchAsyncErrors(async (req, res, next) => {
-  const user = await User.findById(req.params.id).select("-password ");
+  const user = await User.findById(req.params.id).select("-password");
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
+  
+  // Add full URL to profile image if it exists
+  const userWithUrl = {
+    ...user.toObject(),
+    profileImage: user.profileImage ? addUrl(req, user.profileImage) : null
+  };
+
   res.status(200).json({
     success: true,
-    user
+    user: userWithUrl
   });
 });
 // Update User Details

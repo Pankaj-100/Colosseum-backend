@@ -3,6 +3,7 @@ const cors = require("cors");
 const errorMiddleware = require("./middlewares/error");
 const dotenv = require("dotenv");
 const app = express();
+const path = require('path');
 const authRoute = require("./routes/authRoute");
 const adminRoute = require("./routes/adminRoute");
 const videoRoute = require("./routes/videoRoute");
@@ -24,6 +25,10 @@ app.use(
   })
 );
 app.get("/", (req, res, next) => res.json({ anc: "abc" }));
+
+// Serve static files from public directory
+
+app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use("/api/auth", authRoute);
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoute);

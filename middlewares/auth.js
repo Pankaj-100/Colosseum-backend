@@ -5,7 +5,9 @@ const dotenv = require("dotenv");
 dotenv.config({ path: "../config/config.env" });
 
 exports.auth = async (req, res, next) => {
+
   try {
+     
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       return res.status(401).json({ error: { message: "Unauthorized. Please send token" } });
@@ -21,11 +23,13 @@ exports.auth = async (req, res, next) => {
     if (!user || user.currentToken !== authHeader) {
       return res.status(401).json({ error: { message: "Session expired or logged in from another device" } });
     }
-
+ 
     req.userId = user._id;
-  
+
     next();
   } catch (error) {
+     console.log("err");
+     
     return res.status(401).json({ error: { message: "Unauthorized" } });
   }
 };

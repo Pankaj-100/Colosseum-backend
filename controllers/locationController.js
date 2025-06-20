@@ -1,29 +1,40 @@
 const Location = require("../models/locationModel");
 const catchAsyncErrors = require("../utils/catchAsyncError");
 const ErrorHandler = require("../utils/errorHandler");
-const { uploadLocationImage } = require("../utils/s3");
 const { Video } = require("../models/videoModel");
+const fs = require('fs');
+const path = require('path');
+const { getFileUrl } = require("../utils/helperFuns");
 
-// Create location with thumbnail
+const addUrl = (req, filePath) => {
+  if (!filePath) return null;
+  return `${process.env.URL}${filePath}`;
+};
+
+// Create location
 exports.createLocation = catchAsyncErrors(async (req, res, next) => {
   const { name, size } = req.body;
 
-  if (!name) return next(new ErrorHandler("Name is required", 400));
-  if (!size) return next(new ErrorHandler("Size is required", 400));
-  if (!req.file) return next(new ErrorHandler("Thumbnail image is required", 400));
+  if (!name || !size) {
+    return next(new ErrorHandler('Name and size are required', 400));
+  }
 
-  const { imageUrl } = await uploadLocationImage(req.file, name);
+  if (!req.files.image) {
+    return next(new ErrorHandler('Thumbnail image is required', 400));
+  }
 
   const location = await Location.create({
     name,
-    thumbnailUrl: imageUrl,
-    size
+    size,
+    thumbnailUrl: getFileUrl(req, req.files.image?.[0].path)
   });
 
   res.status(201).json({
     success: true,
-    message: "Location created",
-    location
+    data: {
+      ...location.toObject(),
+      thumbnailUrl: addUrl(req, location.thumbnailUrl)
+    }
   });
 });
 
@@ -32,9 +43,15 @@ exports.getAllLocations = catchAsyncErrors(async (req, res, next) => {
   // Get all locations
   const locations = await Location.find().sort({ name: 1 });
   
+  // Add full URLs to each location
+  const locationsWithUrls = locations.map(location => ({
+    ...location.toObject(),
+    thumbnailUrl: addUrl(req, location.thumbnailUrl)
+  }));
+  
   // Get video counts and language stats for each location
   const locationsWithStats = await Promise.all(
-    locations.map(async (location) => {
+    locationsWithUrls.map(async (location) => {
       // Count total videos in this location
       const videoCount = await Video.countDocuments({ primaryLocation: location._id });
       
@@ -49,7 +66,7 @@ exports.getAllLocations = catchAsyncErrors(async (req, res, next) => {
       ]);
       
       return {
-        ...location.toObject(),
+        ...location,
         videoCount,
         languageStats
       };
@@ -70,6 +87,12 @@ exports.getLocationById = catchAsyncErrors(async (req, res, next) => {
 
   if (!location) return next(new ErrorHandler("Location not found", 404));
 
+  // Add full URL to the location thumbnail
+  const locationWithUrl = {
+    ...location.toObject(),
+    thumbnailUrl: addUrl(req, location.thumbnailUrl)
+  };
+
   // Count total videos in this location
   const videoCount = await Video.countDocuments({ primaryLocation: location._id });
   
@@ -85,8 +108,8 @@ exports.getLocationById = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    location: {
-      ...location.toObject(),
+    data: {
+      ...locationWithUrl,
       videoCount,
       languageStats
     }
@@ -96,11 +119,36 @@ exports.getLocationById = catchAsyncErrors(async (req, res, next) => {
 // Update location with optional new thumbnail
 exports.updateLocation = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  const updates = { ...req.body };
+  const { name, size } = req.body;
 
-  if (req.file) {
-    const { imageUrl } = await uploadLocationImage(req.file, updates.name || "location");
-    updates.thumbnailUrl = imageUrl;
+  const location = await Location.findById(id);
+  if (!location) {
+    return next(new ErrorHandler('Location not found', 404));
+  }
+
+  const updates = {
+    name: name || location.name,
+    size: size || location.size
+  };
+
+  // Handle thumbnail update if provided
+  if (req.files.image?.[0]) {
+    // Delete old thumbnail if it exists
+    if (location.thumbnailUrl && location.thumbnailUrl.includes('/public/')) {
+      const relativePath = location.thumbnailUrl.split('/public/')[1]; 
+      const parts = relativePath.split('/');
+
+      if (parts.length >= 2) {
+        const folderPath = path.join('public', parts[0], parts[1]); 
+
+        if (fs.existsSync(folderPath)) {
+          fs.rmSync(folderPath, { recursive: true, force: true }); 
+          console.log(`Deleted folder: ${folderPath}`);
+        }
+      }
+    }
+    
+    updates.thumbnailUrl = getFileUrl(req, req.files.image?.[0].path);
   }
 
   const updatedLocation = await Location.findByIdAndUpdate(id, updates, {
@@ -108,12 +156,13 @@ exports.updateLocation = catchAsyncErrors(async (req, res, next) => {
     runValidators: true
   });
 
-  if (!updatedLocation) return next(new ErrorHandler("Location not found", 404));
-
   res.status(200).json({
     success: true,
-    message: "Location updated",
-    location: updatedLocation
+    message: "Location updated successfully",
+    data: {
+      ...updatedLocation.toObject(),
+      thumbnailUrl: addUrl(req, updatedLocation.thumbnailUrl)
+    }
   });
 });
 
@@ -121,9 +170,27 @@ exports.updateLocation = catchAsyncErrors(async (req, res, next) => {
 exports.deleteLocation = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
 
-  const location = await Location.findByIdAndDelete(id);
+  const location = await Location.findById(id);
+  if (!location) {
+    return next(new ErrorHandler("Location not found", 404));
+  }
 
-  if (!location) return next(new ErrorHandler("Location not found", 404));
+  // Delete associated thumbnail file
+  if (location.thumbnailUrl && location.thumbnailUrl.includes('/public/')) {
+    const relativePath = location.thumbnailUrl.split('/public/')[1]; 
+    const parts = relativePath.split('/');
+
+    if (parts.length >= 2) {
+      const folderPath = path.join('public', parts[0], parts[1]); 
+
+      if (fs.existsSync(folderPath)) {
+        fs.rmSync(folderPath, { recursive: true, force: true }); 
+        console.log(`Deleted folder: ${folderPath}`);
+      }
+    }
+  }
+
+  await location.remove();
 
   res.status(200).json({
     success: true,
