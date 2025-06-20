@@ -64,7 +64,7 @@ const getVideos = async (req, res, next) => {
   res.status(200).json({
     success: true,
     count: videosWithUrls.length,
-    data: videos
+    data: { videos: videos }
   });
 };
 
