@@ -215,7 +215,7 @@ const getFilteredVideos= async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    data: videosWithUrls,
+    data: {videos:videosWithUrls},
     message: "Filtered videos fetched successfully"
   });
 };
