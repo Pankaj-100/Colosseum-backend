@@ -53,9 +53,9 @@ const addUrl = (req, filePath) => {
 
 // Get all videos
 const getVideos = async (req, res, next) => {
-  const videos = await Video.find().populate('primaryLocation');
+  const video = await Video.find().populate('primaryLocation');
   // Add full URLs to each video
-  const videosWithUrls = videos.map(video => ({
+  const videos = video.map(video => ({
     ...video.toObject(),
     videoUrl: addUrl(req, video.videoUrl),
     thumbnailUrl: addUrl(req, video.thumbnailUrl)
@@ -64,7 +64,7 @@ const getVideos = async (req, res, next) => {
   res.status(200).json({
     success: true,
     count: videosWithUrls.length,
-    data: { videos: videosWithUrls }
+    data: videos
   });
 };
 
@@ -78,7 +78,7 @@ const getSingleVideo = async (req, res, next) => {
   }
 
   // Add full URLs to the video
-  const videoWithUrls = {
+  const videos = {
     ...video.toObject(),
     videoUrl: addUrl(req, video.videoUrl),
     thumbnailUrl: addUrl(req, video.thumbnailUrl)
@@ -86,7 +86,7 @@ const getSingleVideo = async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    data: videoWithUrls
+    data: videos
   });
 };
 
