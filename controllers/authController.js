@@ -133,7 +133,7 @@ const verifyOTP = catchAsyncErrors(async (req, res, next) => {
   user.otp = undefined;
   user.otpExpires = undefined;
   await user.save();
-  // 🔔 Create welcome notification
+  //  Create welcome notification
 await createNotification({
   userId: user._id,
   title: "Welcome to Colosseum Video App AI",

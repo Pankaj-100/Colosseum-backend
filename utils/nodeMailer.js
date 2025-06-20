@@ -16,10 +16,6 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendMail = async (email, subject, html) => {
-  console.log("email is here");
-  
-console.log(email);
-
   const mailOptions = {
     from: "abc@gmail.com",
     to:email,
@@ -29,7 +25,6 @@ console.log(email);
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log(`Email sent: ${info.response}`);
     return { success: true, info };
   } catch (error) {
     console.error(" Error sending email:", error);
@@ -38,7 +33,7 @@ console.log(email);
 };
 
 const verifyEmail = async (email, name, otp) => {
-  console.log(" Attempting to send email to:", email); // Add this line
+
   const subject = "OTP Verification";
   const html = await EMAIL_VERIFY(name, otp);
   return await sendMail(email, subject, html);

@@ -17,13 +17,13 @@ dotenv.config({ path: "./config/config.env" });
 app.use(express.json());
 const allowedOrigins = [
   'https://colosseum-admin.vercel.app',
-  'http://localhost:3000' // Optional: allow local development
+  'http://localhost:5173' // 
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests from mobile apps (origin === undefined)
+      
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {

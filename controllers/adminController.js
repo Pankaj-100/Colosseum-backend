@@ -149,7 +149,7 @@ const updateUser = catchAsyncErrors(async (req, res, next) => {
       name: name || user.name,
       email: email || user.email,
       phone: phone || user.phone,
-      verified: verified ?? user.verified // Nullish coalescing
+      verified: verified ?? user.verified 
     },
     { 
       new: true, 

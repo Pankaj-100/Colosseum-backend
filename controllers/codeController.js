@@ -94,7 +94,7 @@ exports.generateCodes = catchAsyncErrors(async (req, res, next) => {
     message: "Activation codes generated"
   });
 });
-// ✅ Admin: View all codes with decrypted plainCode
+// Admin: View all codes with decrypted plainCode
 exports.getActiveCodes = catchAsyncErrors(async (req, res, next) => {
   const codes = await ActivationCode.find()
     .populate("generatedBy", "name")
