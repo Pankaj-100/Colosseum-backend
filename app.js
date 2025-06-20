@@ -15,13 +15,24 @@ const notificationRoute= require("./routes/notificationRoutes")
 dotenv.config({ path: "./config/config.env" });
 
 app.use(express.json());
+const allowedOrigins = [
+  'https://colosseum-admin.vercel.app',
+  'http://localhost:3000' // Optional: allow local development
+];
+
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "POST", "DELETE", "UPDATE", "PUT", "PATCH"],
+    origin: function (origin, callback) {
+      // Allow requests from mobile apps (origin === undefined)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization'], // allow content-type
-  
+    methods: ["GET", "POST", "DELETE", "UPDATE", "PUT", "PATCH"],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.get("/", (req, res, next) => res.json({ anc: "abc" }));
